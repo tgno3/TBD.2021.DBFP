@@ -21,7 +21,7 @@ load("DBFP.2003.2012.Rdata")
 #########################################################################################################################
 
 # Analysis type
-type <- "monthwise"
+type <- 1 # 1: month-wise, 2: three-months average
 
 # Input/Output
 id.x.s1 <- c(13:16)
@@ -30,7 +30,7 @@ id.x.s2 <- c(17:18)
 id.y.s2 <- c(20:21)
 
 # Data for analysis
-if(type = "monthwise"){
+if(type == 1){
   df.2d <- df.raw
 }else{
   df.2d <- data.frame()  
@@ -99,35 +99,35 @@ length(intersect(id.ob, id.m.14.00))
 
 
 #########################################################################################################################
-### Analysis
+### FP Evaluation
 #########################################################################################################################
 
-# Efficiency analysis on MoI
-res.eff <- data.frame(); res.s1.l <- res.s2.l <- list()
+# Productivity analysis
+res.eff.fp <- data.frame(); res.s1.l <- res.s2.l <- list()
 for(i in 1:2){
   for(j in 1:4){
-    id.type  <- if(i == 1) id.nb else id.ob
-    id.month <- if(j == 1) id.m.02.04 else if(j == 2) id.m.05.07 else if(j == 3) id.m.08.13 else id.m.14.00
-    id.eff   <- intersect(id.type, id.month)
-    adj.min  <- apply(df.eff[id.eff, id.y.s2], 2, function(x) if(min(x) < 0) -min(x) else 0)
-    df.temp  <- df.eff[id.eff, ]; df.temp[,id.y.s2] <- t(t(df.temp[,id.y.s2]) + adj.min)
-    g        <- cbind(matrix(rep(0, length(id.eff) * length(id.x.s1)), ncol = length(id.x.s1)), df.temp[,id.y.s1])
-    wd       <- c(0, 0, 1)
-    id.calc  <- which(rowSums(df.temp[,id.y.s2]) > 0)
-    xdata.s1 <- df.temp[,id.x.s1]
-    ydata.s1 <- df.temp[,id.y.s1]
-    xdata.s2 <- df.temp[,id.x.s2]
-    ydata.s2 <- df.temp[,id.y.s2]
-    res.s1   <- dm.sf (xdata.s1, ydata.s1, "vrs", g, wd)
-    res.s2   <- dm.dea(xdata.s2, ydata.s2, "vrs", "o", o = id.calc)
-    res.s1.l <- list(res.s1.l, res.s1$lambda)
-    res.s2.l <- list(res.s2.l, res.s2$lambda)
-    res.eff  <- rbind(res.eff,
-                      data.frame(FP.type  = i,
-                                 FP.month = j,
-                                 FP.id    = df.temp[,2],
-                                 Eff.s1   = res.s1$eff + 1,
-                                 Eff.s2   = res.s2$eff))
+    id.type    <- if(i == 1) id.nb else id.ob
+    id.month   <- if(j == 1) id.m.02.04 else if(j == 2) id.m.05.07 else if(j == 3) id.m.08.13 else id.m.14.00
+    id.eff     <- intersect(id.type, id.month)
+    adj.min    <- apply(df.eff[id.eff, id.y.s2], 2, function(x) if(min(x) < 0) -min(x) else 0)
+    df.temp    <- df.eff[id.eff, ]; df.temp[,id.y.s2] <- t(t(df.temp[,id.y.s2]) + adj.min)
+    g          <- cbind(matrix(rep(0, length(id.eff) * length(id.x.s1)), ncol = length(id.x.s1)), df.temp[,id.y.s1])
+    wd         <- c(0, 0, 1)
+    id.calc    <- which(rowSums(df.temp[,id.y.s2]) > 0)
+    xdata.s1   <- df.temp[,id.x.s1]
+    ydata.s1   <- df.temp[,id.y.s1]
+    xdata.s2   <- df.temp[,id.x.s2]
+    ydata.s2   <- df.temp[,id.y.s2]
+    res.s1     <- dm.sf (xdata.s1, ydata.s1, "vrs", g, wd)
+    res.s2     <- dm.dea(xdata.s2, ydata.s2, "vrs", "o", o = id.calc)
+    res.s1.l   <- list(res.s1.l, res.s1$lambda)
+    res.s2.l   <- list(res.s2.l, res.s2$lambda)
+    res.eff.fp <- rbind(res.eff.fp,
+                        data.frame(FP.type  = i,
+                                   FP.month = j,
+                                   FP.id    = df.temp[,2],
+                                   Eff.s1   = res.s1$eff + 1,
+                                   Eff.s2   = res.s2$eff))
   }
 }
 
@@ -137,4 +137,38 @@ res.lambda <- list(list(res.s1.l[[1]][[1]][[1]][[2]], res.s1.l[[1]][[1]][[2]], r
 
 # List of efficient FP
 res.eff[which(rowSums(res.eff[,c(4:5)]) == 2),]
+
+
+#########################################################################################################################
+### Branch Evaluation
+#########################################################################################################################
+
+# Descriptive stats: Incu vs Normal, 20>= vs 20<
+table(df.eff[,6], df.eff[,8])
+
+# Data aggregation
+v.all         <- c(id.x.s1, id.y.s1, id.y.s2)
+id.inc        <- which(df.eff[,6] == 1)
+id.nor.sm     <- which(df.eff[,6] == 0 & df.eff[,8] == 1)
+id.nor.lg     <- which(df.eff[,8] == 2)
+df.eff.inc    <- aggregate(df.eff[id.inc, v.all], list(df.eff[id.inc, 5]), sum)
+df.eff.nor.sm <- aggregate(df.eff[id.nor.sm, v.all], list(df.eff[id.nor.sm, 5]), sum)
+df.eff.nor.lg <- aggregate(df.eff[id.nor.lg, v.all], list(df.eff[id.nor.lg, 5]), sum)
+
+# Productivity analysis
+type           <- 1 # 1:incu, 2:normal.small, 3:normal.large
+df.temp        <- if(type == 1) df.eff.inc else if(type == 2) df.eff.nor.sm else df.eff.nor.lg
+adj.min        <- apply(df.temp[,9:10], 2, function(x) if(min(x) < 0) -min(x) else 0)
+df.temp[,9:10] <- t(t(df.temp[,9:10]) + adj.min)
+g              <- cbind(matrix(rep(0, nrow(df.temp) * length(id.x.s1)), ncol = length(id.x.s1)), df.temp[,6:8])
+wd             <- c(0, 0, 1)
+res.s1         <- dm.sf (df.temp[,2:5], df.temp[,6:8], "vrs", g, wd)
+res.s2         <- dm.dea(df.temp[,6:7], df.temp[,9:10], "vrs", "o")
+res.eff.br     <- data.frame(BR.id  = df.temp[,1],
+                             Eff.s1 = res.s1$eff + 1,
+                             Eff.s2 = res.s2$eff)
+
+
+
+
 
