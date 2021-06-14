@@ -154,8 +154,8 @@ for(i in 1:2){
 }
 
 # Cleanse lambda list
-res.l.mw <- list(list(res.s1.l.mw[[1]][[1]][[1]][[2]], res.s1.l.mw[[1]][[1]][[2]], res.s1.l.mw[[1]][[2]], res.s1.l.mw[[2]]),
-                 list(res.s2.l.mw[[1]][[1]][[1]][[2]], res.s2.l.mw[[1]][[1]][[2]], res.s2.l.mw[[1]][[2]], res.s2.l.mw[[2]]))
+# res.l.mw <- list(list(res.s1.l.mw[[1]][[1]][[1]][[2]], res.s1.l.mw[[1]][[1]][[2]], res.s1.l.mw[[1]][[2]], res.s1.l.mw[[2]]),
+#                  list(res.s2.l.mw[[1]][[1]][[1]][[2]], res.s2.l.mw[[1]][[1]][[2]], res.s2.l.mw[[1]][[2]], res.s2.l.mw[[2]]))
 res.l.sa <- list(list(res.s1.l.sa[[1]][[1]][[1]][[2]], res.s1.l.sa[[1]][[1]][[2]], res.s1.l.sa[[1]][[2]], res.s1.l.sa[[2]]),
                  list(res.s2.l.sa[[1]][[1]][[1]][[2]], res.s2.l.sa[[1]][[1]][[2]], res.s2.l.sa[[1]][[2]], res.s2.l.sa[[2]]))
 
