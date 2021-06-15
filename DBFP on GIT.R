@@ -136,20 +136,28 @@ for(i in 1:2){
     # Some adjustments to consider sales scale
     adj.comp.s1.sa <- apply(res.comp.s1.sa - 1, 1, function(x) if(x != 0) x/2 else 0) # Smoothing CRS super-Eff
     res.comp.s1.sa <- res.comp.s1.sa - adj.comp.s1.sa
-    adj.w          <- c(10, 1, -10)
-    adj.score      <- apply(df.temp.sa[id.eff.s1.sa, id.y.s1], 1, function(x) sum(x * adj.w))^0.5
-    adj.r.rate     <- 0.7
-    res.rank.s1.sa[id.eff.s1.sa] <- rank(res.comp.s1.sa[id.eff.s1.sa] - adj.score / max(adj.score) * adj.r.rate)
+    adj.w.s1       <- c(10, 1, -10)
+    adj.score.s1   <- apply(df.temp.sa[id.eff.s1.sa, id.y.s1], 1, function(x) sum(x * adj.w.s1))^0.5
+    adj.r.rate.s1  <- 0.7
+    res.rank.s1.sa[id.eff.s1.sa] <- rank(res.comp.s1.sa[id.eff.s1.sa] - adj.score.s1 / max(adj.score.s1) * adj.r.rate.s1)
     
     # # Original
     # res.rank.s1.sa[ id.eff.s1.sa] <- rank(res.comp.s1.sa[id.eff.s1.sa])
     # 
     id.eff.s2.sa   <- which(round(res.s2.sa$eff, 8) == 1)
     res.comp.s2.sa <- res.s2.sa$eff
-    res.comp.s2.sa[id.eff.s2.sa] <- 1/res.s2.sa.se$eff[id.eff.s2.sa]
+    res.rank.s2.sa <- rep(NA, length(res.s2.sa$eff))
+    res.rank.s2.sa[-id.eff.s2.sa] <- rank(res.comp.s2.sa[-id.eff.s2.sa,]) + length(id.eff.s2.sa)
+    res.comp.s2.sa[ id.eff.s2.sa] <- 1/res.s2.sa.se$eff[id.eff.s2.sa]
     res.comp.s2.sa[which(res.comp.s2.sa < 10^-10 | res.comp.s2.sa > 10^10),] <- 1
-    res.rank.s2.sa <- rank(res.comp.s2.sa)
     
+    # Some adjustments to consider contract value
+    adj.w.s2       <- c(0.3, 0.7)
+    adj.score.s2   <- apply(df.temp.sa[id.eff.s2.sa, c(id.x.s2, id.y.s2)], 1, function(x) x[3]/(x[1] + x[2])*adj.w.s2[1] + x[4]/(x[1] + x[2])*adj.w.s2[2])
+    adj.r.rate.s2  <- 0.2
+    res.rank.s2.sa[id.eff.s2.sa] <- rank(res.comp.s2.sa[id.eff.s2.sa] - adj.score.s2 / max(adj.score.s2) * adj.r.rate.s2)
+    
+    # Summary
     res.eff.fp.sa  <- rbind(res.eff.fp.sa, data.frame(FP.type   = i,
                                                       FP.month  = j,
                                                       FP.id     = df.temp.sa[,2],
