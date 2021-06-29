@@ -384,6 +384,7 @@ df.temp[order(res.eff.br.sa$Rank.s1),]
 id.7       <- which(apply(table(df.eff.sa[,1], df.eff.sa[,5]) > 0, 2, function(x) sum(x) == 7) == T)
 df.7       <- subset(df.eff.sa, df.eff.sa[,5] %in% names(id.7))
 df.br.7.2d <- aggregate(df.7[,c(id.x.s1, id.y.s1, id.y.s2)], list(df.7[,1], df.7[,5]), sum)
+df.tot.mg  <- aggregate(df.7[,20], list(df.7[,1], df.7[,5]), mean); df.br.7.2d[,10] <- df.tot.mg$x
 df.br.7.3d <- simplify2array(by(df.br.7.2d, df.br.7.2d[,1], as.matrix))
 
 # Branch type: 1(incu), 2(nor.sm), 3(nor.lg)
@@ -397,6 +398,7 @@ for(i in 1:length(id.7)){
     br.type <- c(br.type, 3)
   }
 }
+names(br.type) <- names(id.7)
 
 # Parameters
 id.x.s1.m   <- id.x.s1 - 10
@@ -448,12 +450,12 @@ res.mq.s2.nsm.avg <- data.frame(Period = unique(res.mq.s2.nsm$cu$Period),
 # DMU of interest
 data.frame(DMU   = 1:length(names(id.7)[which(br.type == 2)]),
            Br.No = names(id.7)[which(br.type == 2)])
-id.doi.s1 <- c(13, 20)
+id.doi.s1 <- 7:11
 df.s1.fs  <- data.frame(subset(res.mq.s1.nsm$fs, DMU %in% id.doi.s1),
                         Name = names(id.7)[which(br.type == 2)][id.doi.s1])
 df.s1.mi  <- data.frame(subset(res.mq.s1.nsm$mi, DMU %in% id.doi.s1),
                         Name = names(id.7)[which(br.type == 2)][id.doi.s1])
-id.doi.s2 <- c(13, 20)
+id.doi.s2 <- c(21)
 df.s2.fs  <- data.frame(subset(res.mq.s2.nsm$fs, DMU %in% id.doi.s2),
                         Name = names(id.7)[which(br.type == 2)][id.doi.s2])
 df.s2.mi  <- data.frame(subset(res.mq.s2.nsm$mi, DMU %in% id.doi.s2),
@@ -466,7 +468,11 @@ df.s2.mi  <- data.frame(subset(res.mq.s2.nsm$mi, DMU %in% id.doi.s2),
 ggplot(data = res.mq.s1.nsm$fs, aes(x = Period, y = FS)) + 
   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
   geom_line(data = res.mq.s1.nsm.avg, aes(x = Period, y = FS, group = 1), size = 1) +
-  geom_line(data = df.s1.fs, aes(x = Period, y = FS, group = Name, color = Name), size = 1.2) + 
+  geom_line(data = df.s1.fs, aes(x = Period, y = FS, group = Name, color = Name), size = 1.5) + 
+  scale_colour_manual(values = c("blueviolet")) +
+  #scale_colour_manual(values = c("orange")) +
+  #scale_colour_manual(values = c("limegreen")) +
+  #scale_colour_manual(values = c("royalblue")) +
   scale_y_continuous(name = "Frontier Shift (Stage 1)") +
   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
@@ -479,7 +485,11 @@ ggplot(data = res.mq.s1.nsm$fs, aes(x = Period, y = FS)) +
 ggplot(data = res.mq.s1.nsm$mi, aes(x = Period, y = MI)) + 
   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
   geom_line(data = res.mq.s1.nsm.avg, aes(x = Period, y = MI, group = 1), size = 1) +
-  geom_line(data = df.s1.mi, aes(x = Period, y = MI, group = Name, color = Name), size = 1.2) + 
+  geom_line(data = df.s1.mi, aes(x = Period, y = MI, group = Name, color = Name), size = 1.5) + 
+  scale_colour_manual(values = c("blueviolet")) +
+  #scale_colour_manual(values = c("orange")) +
+  #scale_colour_manual(values = c("limegreen")) +
+  #scale_colour_manual(values = c("royalblue")) +
   scale_y_continuous(name = "Malmquist Index (Stage 1)") +
   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
@@ -489,40 +499,16 @@ ggplot(data = res.mq.s1.nsm$mi, aes(x = Period, y = MI)) +
         legend.direction     = "horizontal", 
         legend.justification = c(1, 1), legend.position = c(0.95, 0.993))
 
-# FS
-# ggplot(data = res.mq.s1.nsm$fs, aes(x = Period, y = 1/FS)) + 
-#   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
-#   geom_line(data = res.mq.s1.nsm.avg, aes(x = Period, y = 1/FS, group = 1), size = 1) +
-#   geom_line(data = df.s1.fs, aes(x = Period, y = 1/FS, group = Name, color = Name), size = 1.2) + 
-#   scale_y_continuous(name = "Frontier Shift (Stage 1)") +
-#   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
-#   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
-#         axis.title.y         = element_text(size = 14, colour = "gray35"),
-#         legend.title         = element_blank(),
-#         legend.background    = element_rect(fill = "transparent", colour = "transparent"), 
-#         legend.direction     = "horizontal", 
-#         legend.justification = c(1, 1), legend.position = c(0.95, 0.993))
-# MI
-# ggplot(data = res.mq.s1.nsm$mi, aes(x = Period, y = 1/MI)) + 
-#   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
-#   geom_line(data = res.mq.s1.nsm.avg, aes(x = Period, y = 1/MI, group = 1), size = 1) +
-#   geom_line(data = df.s1.mi, aes(x = Period, y = 1/MI, group = Name, color = Name), size = 1.2) + 
-#   scale_y_continuous(name = "Malmquist Index (Stage 1)") +
-#   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
-#   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
-#         axis.title.y         = element_text(size = 14, colour = "gray35"),
-#         legend.title         = element_blank(),
-#         legend.background    = element_rect(fill = "transparent", colour = "transparent"), 
-#         legend.direction     = "horizontal", 
-#         legend.justification = c(1, 1), legend.position = c(0.95, 0.993))
-
 
 ############################################## Stage 2 ##############################################
 # FS
 ggplot(data = res.mq.s2.nsm$fs, aes(x = Period, y = FS)) + 
   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
   geom_line(data = res.mq.s2.nsm.avg, aes(x = Period, y = FS, group = 1), size = 1) +
-  geom_line(data = df.s2.fs, aes(x = Period, y = FS, group = Name, color = Name), size = 1.2) + 
+  geom_line(data = df.s2.fs, aes(x = Period, y = FS, group = Name, color = Name), size = 1.5) + 
+  scale_colour_manual(values = c("mediumslateblue")) +
+  #scale_colour_manual(values = c("tomato")) +
+  #scale_colour_manual(values = c("darkturquoise")) +
   scale_y_continuous(name = "Frontier Shift (Stage 1)") +
   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
@@ -536,7 +522,10 @@ ggplot(data = res.mq.s2.nsm$fs, aes(x = Period, y = FS)) +
 ggplot(data = res.mq.s2.nsm$mi, aes(x = Period, y = MI)) + 
   geom_point(alpha = 0.2, size = 1.2) + theme_bw() + geom_hline(yintercept = 1.0, color = "red", size = 0.5) +
   geom_line(data = res.mq.s2.nsm.avg, aes(x = Period, y = MI, group = 1), size = 1) + 
-  geom_line(data = df.s2.mi, aes(x = Period, y = MI, group = Name, color = Name), size = 1.2) + 
+  geom_line(data = df.s2.mi, aes(x = Period, y = MI, group = Name, color = Name), size = 1.5) + 
+  scale_colour_manual(values = c("mediumslateblue")) +
+  #scale_colour_manual(values = c("tomato")) +
+  #scale_colour_manual(values = c("darkturquoise")) +
   scale_y_continuous(name = "Malmquist Index (Stage 2)") +
   #scale_y_continuous(name = "Malmquist Index (MI)", limits = c(0.85, 1.4), breaks = seq(0.85, 1.4, 0.2)) +
   theme(axis.title.x         = element_text(size = 14, colour = "gray35"),
@@ -591,24 +580,34 @@ ggplot(data = res.mq.s2.nsm$mi, aes(x = Period, y = MI)) +
 # 100/(dm.dea(df.to  [,id.x.s2.m], df.to  [,id.y.s2.m], rts.s2, orientation)$eff[which(df.to  $Group.2 == name)])
 # 
 # Investigation with SBM
-from    <- 202008
-to      <- from + 1
-name    <- 7015
-id.doi  <- which(df.br.7.3d[br.type == 2,,1][,2] == name)
+# Stage 1
+cbind(res.mq.s1.nsm$cu, FS = res.mq.s1.nsm$fs$FS, MI = res.mq.s1.nsm$mi$MI, BR.no = names(id.7)[which(br.type == 2)])
+name <- 4281; from <- 202006; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+name <- 6403; from <- 202007; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+name <- 7015; from <- 202009; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+
 df.from <- cbind(df.br.7.3d[br.type == 2, id.x.s1.m, from - 202005], df.y.temp[,-3, from - 202005])
 df.to   <- cbind(df.br.7.3d[br.type == 2, id.x.s1.m, to   - 202005], df.y.temp[,-3, to   - 202005])
-dm.sbm(df.from[,id.x.s1.m - 2], df.from[,id.y.s1.m - 2], rts.s1)$eff[id.doi] * 100
-dm.sbm(df.to  [,id.x.s1.m - 2], df.to  [,id.y.s1.m - 2], rts.s1)$eff[id.doi] * 100
-df.br.7.3d[which(df.br.7.3d[,2,1] == name),,(from - 202005):(to - 202005)]
 
-from    <- 202010
-to      <- from + 1
-name    <- 6481
-df.from <- subset(df.br.7.2d, Group.1 == from)[br.type == 2,]
-df.to   <- subset(df.br.7.2d, Group.1 == to  )[br.type == 2,]
-dm.sbm(df.from[,id.x.s2.m], df.from[,id.y.s2.m], "vrs")$eff[which(df.from$Group.2 == name)] * 100
-dm.sbm(df.to  [,id.x.s2.m], df.to  [,id.y.s2.m], "vrs")$eff[which(df.to  $Group.2 == name)] * 100
-df.br.7.3d[which(df.br.7.3d[,2,1] == name),,(from - 202005):(to - 202005)]
+dm.sbm(df.from[,1:4], df.from[,5:7], "vrs")$eff[id] * 100
+dm.sbm(df.to  [,1:4], df.to  [,5:7], "vrs")$eff[id] * 100
+round(df.br.7.3d[which(df.br.7.3d[,2,1] == name),,(from - 202005):(to - 202005)])
+cbind(FS = df.s1.fs[from - 202005, 3], MI = df.s1.mi[from - 202005, 3])
 
+# Stage 2
+cbind(res.mq.s2.nsm$cu, FS = res.mq.s2.nsm$fs$FS, MI = res.mq.s2.nsm$mi$MI, BR.no = names(id.7)[which(br.type == 2)])
+name <- 1708; from <- 202010; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+name <- 2305; from <- 202007; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+
+name <- 7052; from <- 202010; to <- from + 1; id <- which(names(id.7)[which(br.type == 2)] == name)
+
+
+df.from <- df.br.7.3d[br.type == 2, c(id.x.s2.m, id.y.s2.m), from - 202005]
+df.to   <- df.br.7.3d[br.type == 2, c(id.x.s2.m, id.y.s2.m), to   - 202005]
+
+dm.sbm(df.from[,1:2], df.from[,3:4], "vrs")$eff[id] * 100
+dm.sbm(df.to  [,1:2], df.to  [,3:4], "vrs")$eff[id] * 100
+round(df.br.7.3d[which(df.br.7.3d[,2,1] == name), c(id.x.s2.m, id.y.s2.m),(from - 202005):(to - 202005)])
+cbind(FS = df.s2.fs[from - 202005, 3], MI = df.s2.mi[from - 202005, 3])
 
 
