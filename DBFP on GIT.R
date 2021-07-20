@@ -120,107 +120,89 @@ for(i in 1:2){
     # res.s3.sa     <- dm.sbm(df.temp.sa[,id.x.s3], cbind(10 - df.temp.sa[,37], 10 - (df.temp.sa[,23] + df.temp.sa[,24]), df.temp.sa[,25]), "vrs", "o")
     # res.s1.l.sa   <- list(res.s1.l.sa, res.s1.sa$lambda)
     # res.s2.l.sa   <- list(res.s2.l.sa, res.s2.sa$lambda)
+    
+    # Empty box for results
+    res.score.s1 <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- rep(NA, nrow(df.temp.sa))
+    res.score.s3 <- res.rank.s3  <- rep(NA, nrow(df.temp.mw))
+    rank.calc.s1 <- rep(NA, length(id.calc.s1))
+    rank.calc.s2 <- rep(NA, length(id.calc.s2))
+    rank.calc.s3 <- rep(NA, length(id.calc.s3))
      
+    
     ###############
     # Scoring
     ###############
     # Stage 1
-    res.s1.sa     <- dm.sbm(df.temp.sa[,id.x.s1], 
-                            cbind(df.temp.sa[,id.y.s1[1:2]] + 1, 
-                                  max(df.temp.sa[,id.y.s1[3]]) + 1 - df.temp.sa[,id.y.s1[3]]), 
-                            "drs", "o", o = id.calc.s1)
-    res.s1.sa.se  <- dm.sbm(df.temp.sa[,id.x.s1], 
-                            cbind(df.temp.sa[,id.y.s1[1:2]] + 1, 
-                                  max(df.temp.sa[,id.y.s1[3]]) + 1 - df.temp.sa[,id.y.s1[3]]), 
-                            "drs", "o", se = T, o = id.calc.s1)
+    res.s1.sa     <- dm.sbm(df.temp.sa[id.calc.s1, id.x.s1], 
+                            cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                  max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]), 
+                            "drs", "o")
+    res.s1.sa.se  <- dm.sbm(df.temp.sa[id.calc.s1, id.x.s1], 
+                            cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                  max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]), 
+                            "drs", "o", se = T)
     
     # Stage 2
-    res.s2.sa     <- dm.sbm(df.temp.sa[,id.x.s2], df.temp.sa[,id.y.s2], "drs", "o", o = id.calc.s2)
-    res.s2.sa.se  <- dm.sbm(df.temp.sa[,id.x.s2], df.temp.sa[,id.y.s2], "drs", "o", se = T, o = id.calc.s2)
+    res.s2.sa     <- dm.sbm(df.temp.sa[id.calc.s2, id.x.s2], 
+                            df.temp.sa[id.calc.s2, id.y.s2],
+                            "drs", "o")
+    res.s2.sa.se  <- dm.sbm(df.temp.sa[id.calc.s2, id.x.s2], 
+                            df.temp.sa[id.calc.s2, id.y.s2],
+                            "drs", "o", se = T)
     
     # Stage 3
-    res.s3.mw     <- dm.sbm(df.temp.mw[,id.x.s3], 
-                            cbind(df.temp.mw[,id.y.s3[1]], 
-                                  max(df.temp.mw[,id.y.s3[2]]) + 1 - df.temp.mw[,id.y.s3[2]],
-                                  max(df.temp.mw[,id.y.s3[3]]) + 1 - df.temp.mw[,id.y.s3[3]]),
-                            "drs", "o", o = id.calc.s3)
-    res.s3.mw.se  <- dm.sbm(df.temp.mw[,id.x.s3], 
-                            cbind(df.temp.mw[,id.y.s3[1]], 
-                                  max(df.temp.mw[,id.y.s3[2]]) + 1 - df.temp.mw[,id.y.s3[2]],
-                                  max(df.temp.mw[,id.y.s3[3]]) + 1 - df.temp.mw[,id.y.s3[3]]),
-                            "drs", "o", se = T, o = id.calc.s3)
+    res.s3.mw     <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
+                            cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
+                                  max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
+                                  max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
+                            "drs", "o")
+    res.s3.mw.se  <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
+                            cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
+                                  max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
+                                  max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
+                            "drs", "o", se = T)
     
     # temporal treatment for -Inf
     res.s1.sa.se$eff[res.s1.sa.se$eff == -Inf] <- 1
     res.s2.sa.se$eff[res.s2.sa.se$eff == -Inf] <- 1
     res.s3.mw.se$eff[res.s3.mw.se$eff == -Inf] <- 1
     
+    # Score
+    res.score.s1[id.calc.s1] <- res.s1.sa$eff * res.s1.sa.se$eff
+    res.score.s2[id.calc.s2] <- res.s2.sa$eff * res.s2.sa.se$eff
+    res.score.s3[id.calc.s3] <- res.s3.mw$eff * res.s3.mw.se$eff
 
+    
     #################
     # Ranking 
     #################
-    res.rank.s1 <- res.rank.s2 <- rep(NA, nrow(df.temp.sa)); res.rank.s3 <- rep(NA, nrow(df.temp.mw))
-    # Stage 1
-    # Super-eff for ranking efficient FP
-    # id.eff.s1.sa   <- which(round(res.s1.sa$eff + 1, 8) == 1)
-    # res.comp.s1.sa <- res.s1.sa$eff + 1
-    # res.rank.s1.sa <- rep(NA, length(res.s1.sa$eff))
-    # res.rank.s1.sa[-id.eff.s1.sa] <- rank(res.comp.s1.sa[-id.eff.s1.sa,]) + length(id.eff.s1.sa)
-    # res.comp.s1.sa[ id.eff.s1.sa] <- res.s1.sa.se$eff[id.eff.s1.sa] + 1
-    # res.comp.s1.sa[which(res.comp.s1.sa < 10^-10 | res.comp.s1.sa > 10^10),] <- 1
-    # 
-    # # Some adjustments to consider sales scale
-    # adj.comp.s1.sa <- apply(res.comp.s1.sa - 1, 1, function(x) if(x != 0) x/2 else 0) # Smoothing CRS super-Eff
-    # res.comp.s1.sa <- res.comp.s1.sa - adj.comp.s1.sa
-    # adj.w.s1       <- c(10, 1, -10)
-    # adj.score.s1   <- apply(df.temp.sa[id.eff.s1.sa, id.y.s1], 1, function(x) sum(x * adj.w.s1))^0.5
-    # adj.r.rate.s1  <- 0.7
-    # res.rank.s1.sa[id.eff.s1.sa] <- rank(res.comp.s1.sa[id.eff.s1.sa] - adj.score.s1 / max(adj.score.s1) * adj.r.rate.s1)
-    # 
-    # Stage 2
-    # # Original
-    # res.rank.s1.sa[ id.eff.s1.sa] <- rank(res.comp.s1.sa[id.eff.s1.sa])
-    # 
-    # id.eff.s2.sa   <- which(round(res.s2.sa$eff, 8) == 1)
-    # res.comp.s2.sa <- rep( 0, length(id.positive)); res.comp.s2.sa[id.positive] <- res.s2.sa$eff
-    # res.rank.s2.sa <- rep(NA, length(id.positive))
-    # res.rank.s2.sa[id.positive][-id.eff.s2.sa] <- rank(res.comp.s2.sa[id.positive][-id.eff.s2.sa]) + length(id.eff.s2.sa)
-    # res.comp.s2.sa[id.positive][ id.eff.s2.sa] <- 1/res.s2.sa.se$eff[id.eff.s2.sa]
-    # res.comp.s2.sa[which(res.comp.s2.sa == -Inf | res.comp.s2.sa == Inf)] <- 1
-    # 
-    # # Some adjustments to consider contract value
-    # adj.w.s2       <- c(0.3, 0.7)
-    # adj.score.s2   <- apply(df.temp.sa[id.eff.s2.sa, c(id.x.s2, id.y.s2)], 1, function(x) x[3]/(x[1] + x[2])*adj.w.s2[1] + x[4]/(x[1] + x[2])*adj.w.s2[2])
-    # adj.r.rate.s2  <- 0.2
-    # res.rank.s2.sa[id.eff.s2.sa] <- rank(res.comp.s2.sa[id.eff.s2.sa] - adj.score.s2 / max(adj.score.s2) * adj.r.rate.s2)
-    
     # Stage 1
     # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
     w.s1.y1.y2 <- c(-0.7, -0.3)
+    res.rank.s1[id.excd.s1] <- nrow(df.temp.sa)
     #ts.y1.s  <- summary(df.temp.sa[,id.y.s1[1]])[3]
     #ts.y2.s  <- summary(df.temp.sa[,id.y.s1[2]])[3]
-    ts.ys.xs <- summary(rowSums(df.temp.sa[,id.y.s1[1:2]]))[2]
-    ts.ys.s  <- summary(rowSums(df.temp.sa[,id.y.s1[1:2]]))[3]
-    ts.ys.m  <- summary(rowSums(df.temp.sa[,id.y.s1[1:2]]))[5]
+    ts.ys.xs <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[2]
+    ts.ys.s  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[3]
+    ts.ys.m  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[5]
     #id.y1.s  <- which(df.temp.sa[,id.y.s1[1]] < ts.y1.s)
     #id.y2.s  <- which(df.temp.sa[,id.y.s1[2]] < ts.y2.s)
-    id.ys.xs <- which(rowSums(df.temp.sa[,id.y.s1[1:2]]) <  ts.ys.xs)
-    id.ys.s  <- which(rowSums(df.temp.sa[,id.y.s1[1:2]]) >= ts.ys.xs & rowSums(df.temp.sa[,id.y.s1[1:2]]) < ts.ys.s)
-    id.ys.m  <- which(rowSums(df.temp.sa[,id.y.s1[1:2]]) >= ts.ys.s  & rowSums(df.temp.sa[,id.y.s1[1:2]]) < ts.ys.m)
+    id.ys.xs <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) <  ts.ys.xs)
+    id.ys.s  <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.xs & rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) < ts.ys.s)
+    id.ys.m  <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.s  & rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) < ts.ys.m)
     #id.xs    <- intersect(unique(c(id.y1.s, id.y2.s)), id.ys.xs)
     #id.s     <- intersect(unique(c(id.y1.s, id.y2.s)), id.ys.s)
     #id.m     <- intersect(unique(c(id.y1.s, id.y2.s)), id.ys.m)
     #id.l     <- setdiff(c(1:nrow(df.temp.sa)), c(id.xs, id.s, id.m, id.excd.s1))
-    id.xs <- id.ys.xs; id.s <- id.ys.s; id.m <- id.ys.m; id.l <- setdiff(c(1:nrow(df.temp.sa)), c(id.xs, id.s, id.m, id.excd.s1))
+    id.xs <- id.ys.xs; id.s <- id.ys.s; id.m <- id.ys.m; id.l <- setdiff(c(1:length(id.calc.s1)), c(id.xs, id.s, id.m, id.excd.s1))
     # res.rank.s1[id.xs] <- round(rank(res.s1.sa$eff[id.xs] * res.s1.sa.se$eff[id.xs] * -1)) + length(id.l) + length(id.m) + length(id.s)
     # res.rank.s1[id.s ] <- round(rank(res.s1.sa$eff[id.s ] * res.s1.sa.se$eff[id.s ] * -1)) + length(id.l) + length(id.m)
     # res.rank.s1[id.m ] <- round(rank(res.s1.sa$eff[id.m ] * res.s1.sa.se$eff[id.m ] * -1)) + length(id.l)
     # res.rank.s1[id.l ] <- round(rank(res.s1.sa$eff[id.l ] * res.s1.sa.se$eff[id.l ] * -1))
-    res.rank.s1[id.xs] <- round(rank(res.s1.sa$eff[id.xs] * res.s1.sa.se$eff[id.xs] * apply(df.temp.sa[id.xs, id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l) + length(id.m) + length(id.s)
-    res.rank.s1[id.s ] <- round(rank(res.s1.sa$eff[id.s ] * res.s1.sa.se$eff[id.s ] * apply(df.temp.sa[id.s , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l) + length(id.m)
-    res.rank.s1[id.m ] <- round(rank(res.s1.sa$eff[id.m ] * res.s1.sa.se$eff[id.m ] * apply(df.temp.sa[id.m , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l)
-    res.rank.s1[id.l ] <- round(rank(res.s1.sa$eff[id.l ] * res.s1.sa.se$eff[id.l ] * apply(df.temp.sa[id.l , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2))
-    res.rank.s1[id.excd.s1] <- nrow(df.temp.sa)
+    rank.calc.s1[id.xs] <- round(rank(res.score.s1[id.xs] * apply(df.temp.sa[id.calc.s1,][id.xs, id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l) + length(id.m) + length(id.s)
+    rank.calc.s1[id.s ] <- round(rank(res.score.s1[id.s ] * apply(df.temp.sa[id.calc.s1,][id.s , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l) + length(id.m)
+    rank.calc.s1[id.m ] <- round(rank(res.score.s1[id.m ] * apply(df.temp.sa[id.calc.s1,][id.m , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2)) + length(id.l)
+    rank.calc.s1[id.l ] <- round(rank(res.score.s1[id.l ] * apply(df.temp.sa[id.calc.s1,][id.l , id.y.s1[1:2]], 2, scale) %*% w.s1.y1.y2))
     
     # Stage 2
     # Scale-wise ranking per tenth group
@@ -228,17 +210,17 @@ for(i in 1:2){
     res.rank.s2[id.excd.s2] <- nrow(df.temp.sa)
     for(s in 1:11){
       id.group <- which(res.s2.sa$eff < s/10 & round(res.s2.sa$eff, 8) >= (s - 1)/10)
-      ts.y1    <- summary(df.temp.sa[id.group, id.y.s2[1]])[2]
-      ts.y2    <- summary(df.temp.sa[id.group, id.y.s2[2]])[2]
-      id.y1.s  <- id.group[which(df.temp.sa[id.group, id.y.s2[1]] < ts.y1)]
-      id.y2.s  <- id.group[which(df.temp.sa[id.group, id.y.s2[2]] < ts.y2)]
+      ts.y1    <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[1]])[2]
+      ts.y2    <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]])[2]
+      id.y1.s  <- id.group[which(df.temp.sa[id.calc.s2,][id.group, id.y.s2[1]] < ts.y1)]
+      id.y2.s  <- id.group[which(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]] < ts.y2)]
       id.s     <- unique(c(id.y1.s, id.y2.s))
       id.n     <- setdiff(id.group, id.s)
       rank.adj <- nrow(df.temp.sa) - sum(res.s2.sa$eff < s/10, na.rm = T) - length(id.excd.s2)
       # res.rank.s2[id.s] <- round(rank(res.s2.sa$eff[id.s] * res.s2.sa.se$eff[id.s] * -1)) + length(id.n) + rank.adj
       # res.rank.s2[id.n] <- round(rank(res.s2.sa$eff[id.n] * res.s2.sa.se$eff[id.n] * -1)) + rank.adj
-      if(length(id.s) > 0) res.rank.s2[id.s] <- round(rank(apply(df.temp.sa[id.s, id.y.s2], 2, scale) %*% w.s2.y1.y2)) + length(id.n) + rank.adj
-      if(length(id.n) > 0) res.rank.s2[id.n] <- round(rank(apply(df.temp.sa[id.n, id.y.s2], 2, scale) %*% w.s2.y1.y2)) + rank.adj
+      if(length(id.s) > 0) rank.calc.s2[id.s] <- round(rank(apply(df.temp.sa[id.calc.s2,][id.s, id.y.s2], 2, scale) %*% w.s2.y1.y2)) + length(id.n) + rank.adj
+      if(length(id.n) > 0) rank.calc.s2[id.n] <- round(rank(apply(df.temp.sa[id.calc.s2,][id.n, id.y.s2], 2, scale) %*% w.s2.y1.y2)) + rank.adj
     }
     
     # Stage 3
@@ -246,15 +228,20 @@ for(i in 1:2){
     res.rank.s3[id.excd.s3] <- nrow(df.temp.sa)
     for(s in 1:11){
       id.group <- which(res.s3.mw$eff < s/10 & round(res.s3.mw$eff, 8) >= (s - 1)/10)
-      ts.y1    <- summary(df.temp.mw[id.group, id.y.s3[1]])[2]
-      id.s     <- id.group[which(df.temp.mw[id.group, id.y.s3[1]] < ts.y1)]
+      ts.y1    <- summary(df.temp.mw[id.calc.s3,][id.group, id.y.s3[1]])[2]
+      id.s     <- id.group[which(df.temp.mw[id.calc.s3,][id.group, id.y.s3[1]] < ts.y1)]
       id.n     <- setdiff(id.group, id.s)
       rank.adj <- nrow(df.temp.mw) - sum(res.s3.mw$eff < s/10, na.rm = T) - length(id.excd.s3)
       # res.rank.s3[id.s] <- round(rank(res.s3.mw$eff[id.s] * res.s3.mw.se$eff[id.s] * -1)) + length(id.n) + rank.adj
       # res.rank.s3[id.n] <- round(rank(res.s3.mw$eff[id.n] * res.s3.mw.se$eff[id.n] * -1)) + rank.adj
-      res.rank.s3[id.s] <- round(rank(df.temp.mw[id.s, id.y.s3[1]] * -1)) + length(id.n) + rank.adj
-      res.rank.s3[id.n] <- round(rank(df.temp.mw[id.n, id.y.s3[1]] * -1)) + rank.adj
+      rank.calc.s3[id.s] <- round(rank(df.temp.mw[id.calc.s3,][id.s, id.y.s3[1]] * -1)) + length(id.n) + rank.adj
+      rank.calc.s3[id.n] <- round(rank(df.temp.mw[id.calc.s3,][id.n, id.y.s3[1]] * -1)) + rank.adj
     }
+    
+    # Rank
+    res.rank.s1[id.calc.s1] <- rank.calc.s1
+    res.rank.s2[id.calc.s2] <- rank.calc.s2
+    res.rank.s3[id.calc.s3] <- rank.calc.s3
     
     # Zero score
     res.s1.sa$eff[id.excd.s1] <- 0
@@ -262,21 +249,21 @@ for(i in 1:2){
     res.s3.mw$eff[id.excd.s3] <- 0
     
     # Summary
-    res.eff.fp.sa  <- rbind(res.eff.fp.sa, data.frame(FP.type   = i,
+    res.all.s1.s2  <- rbind(res.all.s1.s2, data.frame(FP.type   = i,
                                                       FP.month  = j,
                                                       FP.id     = df.temp.sa[,2],
                                                       Closed.m  = m,
-                                                      Score.s1  = round(res.s1.sa$eff * 100),
+                                                      Score.s1  = round(res.score.s1 * 100),
                                                       Rank.s1   = res.rank.s1,
-                                                      Score.s2  = round(res.s2.sa$eff * 100),
+                                                      Score.s2  = round(res.score.s2 * 100),
                                                       Rank.s2   = res.rank.s2))
 
-    res.eff.fp.mw  <- rbind(res.eff.fp.mw, data.frame(FP.type   = i,
-                                                      FP.month  = j,
-                                                      FP.id     = df.temp.sa[,2],
-                                                      Closed.m  = m,
-                                                      Score.s3  = round(res.s3.mw$eff * 100),
-                                                      Rank.s3   = res.rank.s3))
+    res.all.s3    <- rbind(res.all.s3, data.frame(FP.type   = i,
+                                                  FP.month  = j,
+                                                  FP.id     = df.temp.mw[,2],
+                                                  Closed.m  = m,
+                                                  Score.s3  = round(res.score.s3 * 100),
+                                                  Rank.s3   = res.rank.s3))
     
   }
 }
