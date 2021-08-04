@@ -80,7 +80,7 @@ load("DBFP.2003.2012.Rdata")
 ### FP Evaluation
 #########################################################################################################################
 
-# Data of interest
+# Data of evaluation
 m        <- 202012
 df.fp.mw <- df.eff.mw[df.eff.mw[,1] == m,]
 df.fp.sa <- df.eff.sa[df.eff.sa[,1] == m,]
@@ -92,22 +92,24 @@ df.fp.mw$agg.churn <- rowSums(df.fp.mw[,42:44])
 id.m.02.06.sa <- which(df.fp.sa[,10] < 07)
 id.m.07.12.sa <- which(df.fp.sa[,10] > 06 & df.fp.sa[,10] < 13)
 id.m.13.24.sa <- which(df.fp.sa[,10] > 12 & df.fp.sa[,10] < 25)
-id.m.25.00.sa <- which(df.fp.sa[,10] > 24)
+id.m.25.60.sa <- which(df.fp.sa[,10] > 24 & df.fp.sa[,10] < 61)
+id.m.61.00.sa <- which(df.fp.sa[,10] > 60)
 id.m.02.06.mw <- which(df.fp.mw[,10] < 07)
 id.m.07.12.mw <- which(df.fp.mw[,10] > 06 & df.fp.mw[,10] < 13)
 id.m.13.24.mw <- which(df.fp.mw[,10] > 12 & df.fp.mw[,10] < 25)
-id.m.25.00.mw <- which(df.fp.mw[,10] > 24)
+id.m.25.60.mw <- which(df.fp.mw[,10] > 24 & df.fp.mw[,10] < 61)
+id.m.61.00.mw <- which(df.fp.mw[,10] > 60)
 
 # Productivity analysis
 res.all.s1.s2 <- res.all.s3 <- data.frame(); res.s1.l.mw <- res.s2.l.mw <- res.s1.l.sa <- res.s2.l.sa <- res.s2.l.sa.se <- list()
 for(i in 1:2){
-  for(j in 1:4){
+  for(j in 1:5){
     
     # Sub-grouping
     id.type.sa <- if(i == 1) which(df.fp.sa[,9] == 1) else which(df.fp.sa[,9] == 0)
     id.type.mw <- if(i == 1) which(df.fp.mw[,9] == 1) else which(df.fp.mw[,9] == 0)
-    id.m.sa    <- if(j == 1) id.m.02.06.sa else if(j == 2) id.m.07.12.sa else if(j == 3) id.m.13.24.sa else id.m.25.00.sa
-    id.m.mw    <- if(j == 1) id.m.02.06.mw else if(j == 2) id.m.07.12.mw else if(j == 3) id.m.13.24.mw else id.m.25.00.mw
+    id.m.sa    <- if(j == 1) id.m.02.06.sa else if(j == 2) id.m.07.12.sa else if(j == 3) id.m.13.24.sa else if(j == 4) id.m.25.60.sa else id.m.61.00.sa
+    id.m.mw    <- if(j == 1) id.m.02.06.mw else if(j == 2) id.m.07.12.mw else if(j == 3) id.m.13.24.mw else if(j == 4) id.m.25.60.mw else id.m.61.00.mw
     df.temp.sa <- df.fp.sa[intersect(id.type.sa, id.m.sa),]
     df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
     
@@ -196,26 +198,6 @@ for(i in 1:2){
     if(length(id.l ) > 0) res.wsum.s1[id.calc.s1][id.l ] <- apply(df.temp.sa[id.calc.s1,][id.l , id.y.s1[1:2]], 2, function(x) if(length(id.l ) == 1) x else nor(x)) %*% w.s1.y1.y2
     
     # Stage 2
-    # Scale-wise ranking per tenth group
-    # w.s2.y1.y2 <- c(0.3, 0.7)
-    # res.rank.s2[id.excd.s2] <- nrow(df.temp.sa)
-    # for(s in 1:11){
-    #   id.group <- which(res.s2.sa$eff < s/10 & round(res.s2.sa$eff, 8) >= (s - 1)/10)
-    #   ts.y1    <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[1]])[2]
-    #   ts.y2    <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]])[2]
-    #   id.y1.s  <- id.group[which(df.temp.sa[id.calc.s2,][id.group, id.y.s2[1]] <= ts.y1)]
-    #   id.y2.s  <- id.group[which(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]] <= ts.y2)]
-    #   id.s     <- unique(c(id.y1.s, id.y2.s))
-    #   id.n     <- setdiff(id.group, id.s)
-    #   rank.adj <- nrow(df.temp.sa) - sum(res.s2.sa$eff < s/10, na.rm = T) - length(id.excd.s2)
-    #   if(length(id.s) > 0) rank.calc.s2[id.s] <- round(rank(apply(df.temp.sa[id.calc.s2,][id.s, id.y.s2], 2, function(x) if(length(id.s) == 1) x * 0 else nor(x)) %*% w.s2.y1.y2 * -1)) + length(id.n) + rank.adj
-    #   if(length(id.n) > 0) rank.calc.s2[id.n] <- round(rank(apply(df.temp.sa[id.calc.s2,][id.n, id.y.s2], 2, function(x) if(length(id.n) == 1) x * 0 else nor(x)) %*% w.s2.y1.y2 * -1)) + rank.adj
-    #   res.group.s2[id.calc.s2][id.s] <- ifelse(length(id.n) == 0, "Sole", "Q1"); res.group.s2[id.calc.s2][id.n] <- ifelse(length(id.s) == 0, "Sole", "Q2-4")
-    #   if(length(id.s) > 0) res.wsum.s2[id.calc.s2][id.s] <- apply(df.temp.sa[id.calc.s2,][id.s, id.y.s2], 2, function(x) if(length(id.s) == 1) x * 0 else nor(x)) %*% w.s2.y1.y2
-    #   if(length(id.n) > 0) res.wsum.s2[id.calc.s2][id.n] <- apply(df.temp.sa[id.calc.s2,][id.n, id.y.s2], 2, function(x) if(length(id.n) == 1) x * 0 else nor(x)) %*% w.s2.y1.y2
-    # }
-    
-    # Stage 2
     # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
     w.s2.ef.ws <- -c(0.5, 0.5) * c(100, 10); w.s2.y1.y2 <- c(0.3, 0.7)
     res.rank.s2[id.excd.s2] <- nrow(df.temp.sa)
@@ -236,20 +218,6 @@ for(i in 1:2){
     if(length(id.ny.s ) > 0) res.wsum.s2[id.calc.s2][id.ny.s ] <- as.matrix(ny.sum[id.ny.s , 1:2]) %*% w.s2.y1.y2
     if(length(id.ny.m ) > 0) res.wsum.s2[id.calc.s2][id.ny.m ] <- as.matrix(ny.sum[id.ny.m , 1:2]) %*% w.s2.y1.y2
     if(length(id.ny.l ) > 0) res.wsum.s2[id.calc.s2][id.ny.l ] <- as.matrix(ny.sum[id.ny.l , 1:2]) %*% w.s2.y1.y2
-
-    # Stage 3
-    # Scale-wise ranking per tenth group
-    # res.rank.s3[id.excd.s3] <- nrow(df.temp.mw)
-    # for(s in 1:11){
-    #   id.group <- which(res.s3.mw$eff < s/10 & round(res.s3.mw$eff, 8) >= (s - 1)/10)
-    #   ts.y1    <- summary(df.temp.mw[id.calc.s3,][id.group, id.y.s3[1]])[2]
-    #   id.s     <- id.group[which(df.temp.mw[id.calc.s3,][id.group, id.y.s3[1]] < ts.y1)]
-    #   id.n     <- setdiff(id.group, id.s)
-    #   rank.adj <- nrow(df.temp.mw) - sum(res.s3.mw$eff < s/10, na.rm = T) - length(id.excd.s3)
-    #   if(length(id.s) > 0) rank.calc.s3[id.s] <- round(rank(df.temp.mw[id.calc.s3,][id.s, id.y.s3[1]] * -1)) + length(id.n) + rank.adj
-    #   if(length(id.n) > 0) rank.calc.s3[id.n] <- round(rank(df.temp.mw[id.calc.s3,][id.n, id.y.s3[1]] * -1)) + rank.adj
-    #   res.group.s3[id.calc.s3][id.s] <- ifelse(length(id.n) == 0, "Sole", "Q1"); res.group.s3[id.calc.s3][id.n] <- ifelse(length(id.s) == 0, "Sole", "Q2-4")
-    # }
 
     # Stage 3
     # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
@@ -343,32 +311,34 @@ for(m in 202006:202012){
   id.m.02.06.sa <- which(df.fp.sa[,10] < 07)
   id.m.07.12.sa <- which(df.fp.sa[,10] > 06 & df.fp.sa[,10] < 13)
   id.m.13.24.sa <- which(df.fp.sa[,10] > 12 & df.fp.sa[,10] < 25)
-  id.m.25.00.sa <- which(df.fp.sa[,10] > 24)
+  id.m.25.60.sa <- which(df.fp.sa[,10] > 24 & df.fp.sa[,10] < 61)
+  id.m.61.00.sa <- which(df.fp.sa[,10] > 60)
   id.m.02.06.mw <- which(df.fp.mw[,10] < 07)
   id.m.07.12.mw <- which(df.fp.mw[,10] > 06 & df.fp.mw[,10] < 13)
   id.m.13.24.mw <- which(df.fp.mw[,10] > 12 & df.fp.mw[,10] < 25)
-  id.m.25.00.mw <- which(df.fp.mw[,10] > 24)
+  id.m.25.60.mw <- which(df.fp.mw[,10] > 24 & df.fp.mw[,10] < 61)
+  id.m.61.00.mw <- which(df.fp.mw[,10] > 60)
   
   # Productivity analysis
   res.s1.all.q <- res.s2.all.q <- res.s3.all.q <- data.frame()
   for(i in 1:2){
-    for(j in 1:4){
+    for(j in 1:5){
       
       # Sub-grouping
-      id.type.sa    <- if(i == 1) which(df.fp.sa[,9] == 1) else which(df.fp.sa[,9] == 0)
-      id.type.mw    <- if(i == 1) which(df.fp.mw[,9] == 1) else which(df.fp.mw[,9] == 0)
-      id.m.sa       <- if(j == 1) id.m.02.06.sa else if(j == 2) id.m.07.12.sa else if(j == 3) id.m.13.24.sa else id.m.25.00.sa
-      id.m.mw       <- if(j == 1) id.m.02.06.mw else if(j == 2) id.m.07.12.mw else if(j == 3) id.m.13.24.mw else id.m.25.00.mw
-      df.temp.sa    <- df.fp.sa[intersect(id.type.sa, id.m.sa),]
-      df.temp.mw    <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
+      id.type.sa <- if(i == 1) which(df.fp.sa[,9] == 1) else which(df.fp.sa[,9] == 0)
+      id.type.mw <- if(i == 1) which(df.fp.mw[,9] == 1) else which(df.fp.mw[,9] == 0)
+      id.m.sa    <- if(j == 1) id.m.02.06.sa else if(j == 2) id.m.07.12.sa else if(j == 3) id.m.13.24.sa else if(j == 4) id.m.25.60.sa else id.m.61.00.sa
+      id.m.mw    <- if(j == 1) id.m.02.06.mw else if(j == 2) id.m.07.12.mw else if(j == 3) id.m.13.24.mw else if(j == 4) id.m.25.60.mw else id.m.61.00.mw
+      df.temp.sa <- df.fp.sa[intersect(id.type.sa, id.m.sa),]
+      df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
       
       # IDs for evaluation
-      id.calc.s1    <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
-      id.excd.s1    <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
-      id.calc.s2    <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) == 2))
-      id.excd.s2    <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) <  2))
-      id.calc.s3    <- which(df.temp.mw[,id.y.s3[1]] >  0)
-      id.excd.s3    <- which(df.temp.mw[,id.y.s3[1]] <= 0)
+      id.calc.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
+      id.excd.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
+      id.calc.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) == 2))
+      id.excd.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) <  2))
+      id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
+      id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
       
       ###############
       # Scoring
