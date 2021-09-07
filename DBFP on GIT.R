@@ -15,72 +15,67 @@ sapply(pkgs, require, character.only = T)
 # Load data & parameters
 load("DBFP.2003.2012.Rdata")
 
+# Switch for MW vs SA
+e.type <- "mw"
+
 
 #########################################################################################################################
 ### Data cleansing
 #########################################################################################################################
 
-# # IDs for exclusion
-# id.out.level   <- which( is.na(match(df.raw[,3], c(100, 101, 102, 109, 112))))
-# id.out.branch  <- which(!is.na(match(df.raw[,5], c(8262, 8312, 8335, 8354))))
-# id.out.bunit   <- which(!is.na(match(df.raw[,4], c(74, NA))))
-# id.out.month   <- which(df.raw[,10] == 1)
-# #id.out.zero.s1 <- which(rowSums(df.raw[,c(17, 18)]) == 0)
-# 
-# # Effective data
-# id.out.all <- unique(c(id.out.level, id.out.branch, id.out.bunit, id.out.month))
-# df.eff.mw  <- df.raw[-id.out.all,][order(df.raw[-id.out.all,][,1], df.raw[-id.out.all,][,2]),]
-# 
-# # DF for sliding average
-# df.eff.sa <- data.frame()  
-# for(i in 202006:202012){
-#   id.eff <- c()
-#   for(j in df.eff.mw[which(df.eff.mw[,1] == i), 2]){
-#     if(sum(df.eff.mw[which(df.eff.mw[,1] %in% c(i - 2, i - 1)), 2] == j) == 2){
-#       id.eff <- c(id.eff, j)
-#     }else{
-#       next
-#     }
-#   }
-#   df.temp.cr <- subset(df.eff.mw, df.eff.mw[,1] == i       & df.eff.mw[,2] %in% id.eff)
-#   df.temp.p1 <- subset(df.eff.mw, df.eff.mw[,1] == (i - 1) & df.eff.mw[,2] %in% id.eff)
-#   df.temp.p2 <- subset(df.eff.mw, df.eff.mw[,1] == (i - 2) & df.eff.mw[,2] %in% id.eff)
-#   df.temp.cr <- df.temp.cr[order(df.temp.cr[,2]),]
-#   df.temp.p1 <- df.temp.p1[order(df.temp.p1[,2]),]
-#   df.temp.p2 <- df.temp.p2[order(df.temp.p2[,2]),]
-#   df.temp    <- df.temp.cr
-#   df.temp[,13:21] <- df.temp.cr[,13:21] + df.temp.p1[,13:21] + df.temp.p2[,13:21]
-#   df.eff.sa  <- rbind(df.eff.sa, df.temp)
-# }
-# 
-# # Average for comprehensive profit margin
-# df.eff.sa[,20] <- df.eff.sa[,20]/3
-# 
-# # Data of interest
-# m        <- 202007
-# df.fp.mw <- df.eff.mw[df.eff.mw[,1] == m,]
-# df.fp.sa <- df.eff.sa[df.eff.sa[,1] == m,]
-# 
-# # Only consider the same FP for mw
-# #df.fp.mw <- df.fp.mw[df.fp.mw[,2] %in% df.fp.sa[,2],]
-# 
-# # Insert churns aggregated 
-# df.fp.mw$agg.churn <- rowSums(df.fp.mw[,42:44])
-# 
-# # IDs
-# id.x.s1 <- c(13:16)
-# id.y.s1 <- c(17:19)
-# id.x.s2 <- c(17:18)
-# id.y.s2 <- c(20:21)
-# id.x.s3 <- c(22)
-# id.y.s3 <- c(25, 37, 45)
-# 
+# IDs for exclusion
+id.out.level   <- which( is.na(match(df.raw[,3], c(100, 101, 102, 109, 112))))
+id.out.branch  <- which(!is.na(match(df.raw[,5], c(8262, 8312, 8335, 8354))))
+id.out.bunit   <- which(!is.na(match(df.raw[,4], c(74, NA))))
+id.out.month   <- which(df.raw[,10] %in% c(1, 2, 3))
+#id.out.zero.s1 <- which(rowSums(df.raw[,c(17, 18)]) == 0)
+
+# Effective data
+id.out.all <- unique(c(id.out.level, id.out.branch, id.out.bunit, id.out.month))
+df.eff.mw  <- df.raw[-id.out.all,][order(df.raw[-id.out.all,][,1], df.raw[-id.out.all,][,2]),]
+
+# DF for sliding average
+df.eff.sa <- data.frame()
+for(i in 202006:202012){
+  id.eff <- c()
+  for(j in df.eff.mw[which(df.eff.mw[,1] == i), 2]){
+    if(sum(df.eff.mw[which(df.eff.mw[,1] %in% c(i - 2, i - 1)), 2] == j) == 2){
+      id.eff <- c(id.eff, j)
+    }else{
+      next
+    }
+  }
+  df.temp.cr <- subset(df.eff.mw, df.eff.mw[,1] == i       & df.eff.mw[,2] %in% id.eff)
+  df.temp.p1 <- subset(df.eff.mw, df.eff.mw[,1] == (i - 1) & df.eff.mw[,2] %in% id.eff)
+  df.temp.p2 <- subset(df.eff.mw, df.eff.mw[,1] == (i - 2) & df.eff.mw[,2] %in% id.eff)
+  df.temp.cr <- df.temp.cr[order(df.temp.cr[,2]),]
+  df.temp.p1 <- df.temp.p1[order(df.temp.p1[,2]),]
+  df.temp.p2 <- df.temp.p2[order(df.temp.p2[,2]),]
+  df.temp    <- df.temp.cr
+  df.temp[,13:21] <- df.temp.cr[,13:21] + df.temp.p1[,13:21] + df.temp.p2[,13:21]
+  df.eff.sa  <- rbind(df.eff.sa, df.temp)
+}
+
+# Average for comprehensive profit margin
+df.eff.sa[,20] <- df.eff.sa[,20]/3
+
+# Only consider the same FP for mw
+#df.fp.mw <- df.fp.mw[df.fp.mw[,2] %in% df.fp.sa[,2],]
+
+# IDs
+id.x.s1 <- c(13:16)
+id.y.s1 <- c(17:19)
+id.x.s2 <- c(17:18)
+id.y.s2 <- c(20:21)
+id.x.s3 <- c(22)
+id.y.s3 <- c(25, 37, 45)
+
 
 #########################################################################################################################
 ### FP Evaluation
 #########################################################################################################################
 
-# Loop for all months
+# Loop for all periods
 res.all.m.s1.s2 <- res.all.m.s3 <- data.frame()
 for(m in 202006:202012){
   
@@ -117,66 +112,64 @@ for(m in 202006:202012){
       df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
       
       # IDs for evaluation
-      id.calc.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
-      id.excd.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
-      id.calc.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) == 2))
-      id.excd.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) <  2))
+      df.temp.12 <- if(e.type == "mw") df.temp.mw else df.temp.sa
+      id.calc.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
+      id.excd.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
+      id.calc.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) == 2))
+      id.excd.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) <  2))
       id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
       id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
   
       # Empty box for results
-      res.score.s1   <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- res.group.s1 <- res.group.s2 <- res.wsum.s1 <- res.wsum.s2 <- rep(NA, nrow(df.temp.sa))
-      res.score.s3   <- res.rank.s3 <- res.group.s3 <- res.wsum.s3 <- rep(NA, nrow(df.temp.mw))
-      rank.calc.s1   <- rep(NA, length(id.calc.s1))
-      rank.calc.s2   <- rep(NA, length(id.calc.s2))
-      rank.calc.s3   <- rep(NA, length(id.calc.s3))
-      res.tar.sbm.s1 <- array(NA, c(nrow(df.temp.sa), length(id.y.s1))); res.tar.sup.s1 <- array(NA, c(nrow(df.temp.sa), 1 + length(id.x.s1) + length(id.y.s1)))
-      res.tar.sbm.s2 <- array(NA, c(nrow(df.temp.sa), length(id.y.s2))); res.tar.sup.s2 <- array(NA, c(nrow(df.temp.sa), 1 + length(id.x.s2) + length(id.y.s2)))
-      res.tar.sbm.s3 <- array(NA, c(nrow(df.temp.sa), length(id.y.s3))); res.tar.sup.s3 <- array(NA, c(nrow(df.temp.sa), 1 + length(id.x.s3) + length(id.y.s3)))
-       
+      res.score.s1 <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- res.group.s1 <- res.group.s2 <- res.wsum.s1 <- res.wsum.s2 <- rep(NA, nrow(df.temp.12))
+      res.score.s3 <- res.rank.s3 <- res.group.s3 <- res.wsum.s3 <- rep(NA, nrow(df.temp.mw))
+      rank.calc.s1 <- rep(NA, length(id.calc.s1))
+      rank.calc.s2 <- rep(NA, length(id.calc.s2))
+      rank.calc.s3 <- rep(NA, length(id.calc.s3))
+
       
       ###############
       # Scoring
       ###############
       # Stage 1
-      res.s1.sa    <- dm.sbm(df.temp.sa[id.calc.s1, id.x.s1], 
-                             cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
-                                   max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]), 
-                             "drs", "o")
-      res.s1.sa.se <- dm.sbm(df.temp.sa[id.calc.s1, id.x.s1], 
-                             cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
-                                   max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]), 
-                             "drs", "o", se = T)
+      res.s1    <- dm.sbm(df.temp.12[id.calc.s1, id.x.s1], 
+                          cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]), 
+                          "drs", "o")
+      res.s1.se <- dm.sbm(df.temp.12[id.calc.s1, id.x.s1], 
+                          cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]), 
+                          "drs", "o", se = T)
       
       # Stage 2
-      res.s2.sa    <- dm.sbm(df.temp.sa[id.calc.s2, id.x.s2], 
-                             df.temp.sa[id.calc.s2, id.y.s2],
-                             "drs", "o")
-      res.s2.sa.se <- dm.sbm(df.temp.sa[id.calc.s2, id.x.s2], 
-                             df.temp.sa[id.calc.s2, id.y.s2],
-                             "drs", "o", se = T)
+      res.s2    <- dm.sbm(df.temp.12[id.calc.s2, id.x.s2], 
+                          df.temp.12[id.calc.s2, id.y.s2],
+                          "drs", "o")
+      res.s2.se <- dm.sbm(df.temp.12[id.calc.s2, id.x.s2], 
+                          df.temp.12[id.calc.s2, id.y.s2],
+                          "drs", "o", se = T)
       
       # Stage 3
-      res.s3.mw    <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
-                             cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
-                                   max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
-                                   max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
-                             "drs", "o")
-      res.s3.mw.se <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
-                             cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
-                                   max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
-                                   max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
-                             "drs", "o", se = T)
+      res.s3    <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
+                          cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
+                                max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
+                                max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
+                          "drs", "o")
+      res.s3.se <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
+                          cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
+                                max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
+                                max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
+                          "drs", "o", se = T)
       
       # temporal treatment for -Inf
-      res.s1.sa.se$eff[res.s1.sa.se$eff == -Inf] <- 1
-      res.s2.sa.se$eff[res.s2.sa.se$eff == -Inf] <- 1
-      res.s3.mw.se$eff[res.s3.mw.se$eff == -Inf] <- 1
+      res.s1.se$eff[res.s1.se$eff == -Inf] <- 1
+      res.s2.se$eff[res.s2.se$eff == -Inf] <- 1
+      res.s3.se$eff[res.s3.se$eff == -Inf] <- 1
       
       # Score
-      res.score.s1[id.calc.s1] <- res.s1.sa$eff * res.s1.sa.se$eff^0.1
-      res.score.s2[id.calc.s2] <- res.s2.sa$eff * res.s2.sa.se$eff^0.1
-      res.score.s3[id.calc.s3] <- res.s3.mw$eff * res.s3.mw.se$eff^0.1
+      res.score.s1[id.calc.s1] <- res.s1$eff * res.s1.se$eff^0.1
+      res.score.s2[id.calc.s2] <- res.s2$eff * res.s2.se$eff^0.1
+      res.score.s3[id.calc.s3] <- res.s3$eff * res.s3.se$eff^0.1
   
       
       #################
@@ -185,29 +178,29 @@ for(m in 202006:202012){
       # Stage 1
       # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
       w.s1.ef.ws <- -c(0.5, 0.5) * c(100, 10); w.s1.y1.y2 <- c(0.7, 0.3)
-      res.rank.s1[id.excd.s1] <- nrow(df.temp.sa)
-      ts.ys.xs <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[2]
-      ts.ys.s  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[3]
-      ts.ys.m  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[5]
-      id.ys.xs <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) <  ts.ys.xs)
-      id.ys.s  <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.xs & rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) < ts.ys.s)
-      id.ys.m  <- which(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.s  & rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]) < ts.ys.m)
+      res.rank.s1[id.excd.s1] <- nrow(df.temp.12)
+      ts.ys.xs <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[2]
+      ts.ys.s  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[3]
+      ts.ys.m  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[5]
+      id.ys.xs <- which(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]) <  ts.ys.xs)
+      id.ys.s  <- which(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.xs & rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]) < ts.ys.s)
+      id.ys.m  <- which(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]) >= ts.ys.s  & rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]) < ts.ys.m)
       id.xs <- id.ys.xs; id.s <- id.ys.s; id.m <- id.ys.m; id.l <- setdiff(c(1:length(id.calc.s1)), c(id.xs, id.s, id.m))
-      if(length(id.xs) > 0) rank.calc.s1[id.xs] <- round(rank(res.score.s1[id.calc.s1][id.xs] * w.s1.ef.ws[1] + apply(df.temp.sa[id.calc.s1,][id.xs, id.y.s1[1:2]], 2, function(x) if(length(id.xs) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l) + length(id.m) + length(id.s)
-      if(length(id.s ) > 0) rank.calc.s1[id.s ] <- round(rank(res.score.s1[id.calc.s1][id.s ] * w.s1.ef.ws[1] + apply(df.temp.sa[id.calc.s1,][id.s , id.y.s1[1:2]], 2, function(x) if(length(id.s ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l) + length(id.m)
-      if(length(id.m ) > 0) rank.calc.s1[id.m ] <- round(rank(res.score.s1[id.calc.s1][id.m ] * w.s1.ef.ws[1] + apply(df.temp.sa[id.calc.s1,][id.m , id.y.s1[1:2]], 2, function(x) if(length(id.m ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l)
-      if(length(id.l ) > 0) rank.calc.s1[id.l ] <- round(rank(res.score.s1[id.calc.s1][id.l ] * w.s1.ef.ws[1] + apply(df.temp.sa[id.calc.s1,][id.l , id.y.s1[1:2]], 2, function(x) if(length(id.l ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2]))
+      if(length(id.xs) > 0) rank.calc.s1[id.xs] <- round(rank(res.score.s1[id.calc.s1][id.xs] * w.s1.ef.ws[1] + apply(df.temp.12[id.calc.s1,][id.xs, id.y.s1[1:2]], 2, function(x) if(length(id.xs) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l) + length(id.m) + length(id.s)
+      if(length(id.s ) > 0) rank.calc.s1[id.s ] <- round(rank(res.score.s1[id.calc.s1][id.s ] * w.s1.ef.ws[1] + apply(df.temp.12[id.calc.s1,][id.s , id.y.s1[1:2]], 2, function(x) if(length(id.s ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l) + length(id.m)
+      if(length(id.m ) > 0) rank.calc.s1[id.m ] <- round(rank(res.score.s1[id.calc.s1][id.m ] * w.s1.ef.ws[1] + apply(df.temp.12[id.calc.s1,][id.m , id.y.s1[1:2]], 2, function(x) if(length(id.m ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2])) + length(id.l)
+      if(length(id.l ) > 0) rank.calc.s1[id.l ] <- round(rank(res.score.s1[id.calc.s1][id.l ] * w.s1.ef.ws[1] + apply(df.temp.12[id.calc.s1,][id.l , id.y.s1[1:2]], 2, function(x) if(length(id.l ) == 1) x else nor(x)) %*% w.s1.y1.y2 * w.s1.ef.ws[2]))
       res.group.s1[id.calc.s1][id.xs] <- "Q1"; res.group.s1[id.calc.s1][id.s]  <- "Q2"; res.group.s1[id.calc.s1][id.m]  <- "Q3"; res.group.s1[id.calc.s1][id.l]  <- "Q4"
-      if(length(id.xs) > 0) res.wsum.s1[id.calc.s1][id.xs] <- apply(df.temp.sa[id.calc.s1,][id.xs, id.y.s1[1:2]], 2, function(x) if(length(id.xs) == 1) x else nor(x)) %*% w.s1.y1.y2
-      if(length(id.s ) > 0) res.wsum.s1[id.calc.s1][id.s ] <- apply(df.temp.sa[id.calc.s1,][id.s , id.y.s1[1:2]], 2, function(x) if(length(id.s ) == 1) x else nor(x)) %*% w.s1.y1.y2
-      if(length(id.m ) > 0) res.wsum.s1[id.calc.s1][id.m ] <- apply(df.temp.sa[id.calc.s1,][id.m , id.y.s1[1:2]], 2, function(x) if(length(id.m ) == 1) x else nor(x)) %*% w.s1.y1.y2
-      if(length(id.l ) > 0) res.wsum.s1[id.calc.s1][id.l ] <- apply(df.temp.sa[id.calc.s1,][id.l , id.y.s1[1:2]], 2, function(x) if(length(id.l ) == 1) x else nor(x)) %*% w.s1.y1.y2
+      if(length(id.xs) > 0) res.wsum.s1[id.calc.s1][id.xs] <- apply(df.temp.12[id.calc.s1,][id.xs, id.y.s1[1:2]], 2, function(x) if(length(id.xs) == 1) x else nor(x)) %*% w.s1.y1.y2
+      if(length(id.s ) > 0) res.wsum.s1[id.calc.s1][id.s ] <- apply(df.temp.12[id.calc.s1,][id.s , id.y.s1[1:2]], 2, function(x) if(length(id.s ) == 1) x else nor(x)) %*% w.s1.y1.y2
+      if(length(id.m ) > 0) res.wsum.s1[id.calc.s1][id.m ] <- apply(df.temp.12[id.calc.s1,][id.m , id.y.s1[1:2]], 2, function(x) if(length(id.m ) == 1) x else nor(x)) %*% w.s1.y1.y2
+      if(length(id.l ) > 0) res.wsum.s1[id.calc.s1][id.l ] <- apply(df.temp.12[id.calc.s1,][id.l , id.y.s1[1:2]], 2, function(x) if(length(id.l ) == 1) x else nor(x)) %*% w.s1.y1.y2
       
       # Stage 2
       # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
       w.s2.ef.ws <- -c(0.5, 0.5) * c(100, 10); w.s2.y1.y2 <- c(0.3, 0.7)
-      res.rank.s2[id.excd.s2] <- nrow(df.temp.sa)
-      ny.sum   <- data.frame(apply(df.temp.sa[id.calc.s2, id.y.s2], 2, function(x) nor(x)), nor(df.temp.sa[id.calc.s2, id.y.s2[1]]) * w.s2.y1.y2[1] + nor(df.temp.sa[id.calc.s2, id.y.s2[2]]) * w.s2.y1.y2[2])
+      res.rank.s2[id.excd.s2] <- nrow(df.temp.12)
+      ny.sum   <- data.frame(apply(df.temp.12[id.calc.s2, id.y.s2], 2, function(x) nor(x)), nor(df.temp.12[id.calc.s2, id.y.s2[1]]) * w.s2.y1.y2[1] + nor(df.temp.12[id.calc.s2, id.y.s2[2]]) * w.s2.y1.y2[2])
       ts.ny.xs <- summary(ny.sum[,3])[2]
       ts.ny.s  <- summary(ny.sum[,3])[3]
       ts.ny.m  <- summary(ny.sum[,3])[5]
@@ -263,37 +256,37 @@ for(m in 202006:202012){
       #################
       # Stage 1
       # SBM target
-      tar.calc.sbm.s1 <- res.s1.sa$lambda %*% as.matrix(cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
-                                                        max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]))
-      res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]), floor(max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
-      res.tar.sbm.s1[which(res.rank.s1 == 1),] <- as.matrix(df.temp.sa[id.calc.s1, id.y.s1][which(res.rank.s1[id.calc.s1] == 1),])
+      tar.calc.sbm.s1 <- res.s1.sa$lambda %*% as.matrix(cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                                        max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
+      res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]), floor(max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
+      res.tar.sbm.s1[which(res.rank.s1 == 1),] <- as.matrix(df.temp.12[id.calc.s1, id.y.s1][which(res.rank.s1[id.calc.s1] == 1),])
       
       # Scaled-up target
-      id.tar.sup.s1 <- target.scale.up(df.temp.sa[id.calc.s1, id.x.s1], df.temp.sa[id.calc.s1, id.y.s1], res.score.s1[id.calc.s1]*100, res.rank.s1[id.calc.s1], 10, 3)$res.target
-      res.tar.sup.s1[id.calc.s1,] <- as.matrix(df.temp.sa[id.calc.s1, c(2, id.x.s1, id.y.s1)][id.tar.sup.s1,])
+      id.tar.sup.s1 <- target.scale.up(df.temp.12[id.calc.s1, id.x.s1], df.temp.12[id.calc.s1, id.y.s1], res.score.s1[id.calc.s1]*100, res.rank.s1[id.calc.s1], 10, 3)$res.target
+      res.tar.sup.s1[id.calc.s1,] <- as.matrix(df.temp.12[id.calc.s1, c(2, id.x.s1, id.y.s1)][id.tar.sup.s1,])
   
       # Stage 2
       # SBM target
-      tar.calc.sbm.s2 <- res.s2.sa$lambda %*% as.matrix(df.temp.sa[id.calc.s2, id.y.s2])
+      tar.calc.sbm.s2 <- res.s2.sa$lambda %*% as.matrix(df.temp.12[id.calc.s2, id.y.s2])
       res.tar.sbm.s2[id.calc.s2,] <- as.matrix(tar.calc.sbm.s2)
-      res.tar.sbm.s2[which(res.rank.s2 == 1),] <- as.matrix(df.temp.sa[id.calc.s2, id.y.s2][which(res.rank.s2[id.calc.s2] == 1),])
+      res.tar.sbm.s2[which(res.rank.s2 == 1),] <- as.matrix(df.temp.12[id.calc.s2, id.y.s2][which(res.rank.s2[id.calc.s2] == 1),])
       
       # Scaled-up target
-      id.tar.sup.s2 <- target.scale.up(df.temp.sa[id.calc.s2, id.x.s2], df.temp.sa[id.calc.s2, id.y.s2], res.score.s2[id.calc.s2]*100, res.rank.s2[id.calc.s2], c(10^10, 10^6, 1, 1, 10^-2), efc = T)$res.target
-      res.tar.sup.s2[id.calc.s2,] <- as.matrix(df.temp.sa[id.calc.s2, c(2, id.x.s2, id.y.s2)][id.tar.sup.s2,])
+      id.tar.sup.s2 <- target.scale.up(df.temp.12[id.calc.s2, id.x.s2], df.temp.12[id.calc.s2, id.y.s2], res.score.s2[id.calc.s2]*100, res.rank.s2[id.calc.s2], c(10^10, 10^6, 1, 1, 10^-2), efc = T)$res.target
+      res.tar.sup.s2[id.calc.s2,] <- as.matrix(df.temp.12[id.calc.s2, c(2, id.x.s2, id.y.s2)][id.tar.sup.s2,])
   
-      # View(cbind(df.temp.sa[id.calc.s2, c(id.x.s2, id.y.s2)], res.score.s2[id.calc.s2], res.rank.s2[id.calc.s2], res.tar.sbm.s2[id.calc.s2,], res.tar.sup.s2[id.calc.s2,]))
+      # View(cbind(df.temp.12[id.calc.s2, c(id.x.s2, id.y.s2)], res.score.s2[id.calc.s2], res.rank.s2[id.calc.s2], res.tar.sbm.s2[id.calc.s2,], res.tar.sup.s2[id.calc.s2,]))
       
       
       # Summary
       res.all.s1.s2 <- rbind(res.all.s1.s2, data.frame(Closed.m   = m,
-                                                       B.unit     = df.temp.sa[,4],
-                                                       B.branch   = df.temp.sa[,5],
+                                                       B.unit     = df.temp.12[,4],
+                                                       B.branch   = df.temp.12[,5],
                                                        FP.e.type  = i,
                                                        FP.m.type  = j,
-                                                       FP.month   = df.temp.sa[,10],
-                                                       FP.id      = df.temp.sa[,2],
-                                                       df.temp.sa[,c(id.x.s1, id.y.s1, id.y.s2)],
+                                                       FP.month   = df.temp.12[,10],
+                                                       FP.id      = df.temp.12[,2],
+                                                       df.temp.12[,c(id.x.s1, id.y.s1, id.y.s2)],
                                                        Group.s1   = res.group.s1,
                                                        E.score.s1 = res.score.s1,
                                                        W.sum.s1   = res.wsum.s1,
@@ -366,41 +359,22 @@ for(m in 202006:202012){
       df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
       
       # IDs for evaluation
-      id.calc.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
-      id.excd.s1 <- which(apply(df.temp.sa[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
-      id.calc.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) == 2))
-      id.excd.s2 <- which(apply(df.temp.sa[,id.y.s2], 1, function(x) sum(x > 0) <  2))
+      df.temp.12 <- if(e.type == "mw") df.temp.mw else df.temp.sa
+      id.calc.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
+      id.excd.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
+      id.calc.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) == 2))
+      id.excd.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) <  2))
       id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
       id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
-      
-      ###############
-      # Scoring
-      ###############
-      # # Stage 1
-      # res.s1.sa    <- dm.sbm(df.temp.sa[id.calc.s1, id.x.s1], 
-      #                        cbind(df.temp.sa[id.calc.s1, id.y.s1[1:2]] + 1, 
-      #                              max(df.temp.sa[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.sa[id.calc.s1, id.y.s1[3]]), 
-      #                        "drs", "o")
-      # 
-      # # Stage 2
-      # res.s2.sa    <- dm.sbm(df.temp.sa[id.calc.s2, id.x.s2], 
-      #                        df.temp.sa[id.calc.s2, id.y.s2],
-      #                        "drs", "o")
-      # 
-      # # Stage 3
-      # res.s3.mw    <- dm.sbm(df.temp.mw[id.calc.s3, id.x.s3], 
-      #                        cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
-      #                              max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
-      #                              max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]),
-      #                        "drs", "o")
 
+            
       #################
       # Ranking 
       #################
       # Stage 1
-      s1.ts.ys.xs <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[2]
-      s1.ts.ys.s  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[3]
-      s1.ts.ys.m  <- summary(rowSums(df.temp.sa[id.calc.s1, id.y.s1[1:2]]))[5]
+      s1.ts.ys.xs <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[2]
+      s1.ts.ys.s  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[3]
+      s1.ts.ys.m  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[5]
 
       # Stage 2
       # s2.ts.all.y1 <- s2.ts.all.y2 <- rep(NA, 11)
@@ -410,7 +384,7 @@ for(m in 202006:202012){
       #   s2.ts.all.y2[s] <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]])[2]
       # }
       w.s2.y1.y2  <- c(0.3, 0.7)
-      ny.sum      <- nor(df.temp.sa[id.calc.s2, id.y.s2[1]]) * w.s2.y1.y2[1] + nor(df.temp.sa[id.calc.s2, id.y.s2[2]]) * w.s2.y1.y2[2]
+      ny.sum      <- nor(df.temp.12[id.calc.s2, id.y.s2[1]]) * w.s2.y1.y2[1] + nor(df.temp.12[id.calc.s2, id.y.s2[2]]) * w.s2.y1.y2[2]
       s2.ts.ny.xs <- summary(ny.sum)[2]
       s2.ts.ny.s  <- summary(ny.sum)[3]
       s2.ts.ny.m  <- summary(ny.sum)[5]

@@ -41,7 +41,7 @@ target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = 
 
     # Output constraints
     for(r in 1:s){ # No decrease of output allowed
-      if(r == bo){
+      if(r %in% bo){
         add.constraint(lp.tsu, c(ydata[,r],  1), indices = c(1:n, n + v + 1 + m + r), "=", ydata[k, r])
         add.constraint(lp.tsu, c(1), indices = c(n + m + r), "=", 0)
       }else{
