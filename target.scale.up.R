@@ -77,10 +77,10 @@ target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = 
       res.who[k,] <- which(res.temp[1:n] > 0)
       res.p.d[k,] <- res.temp[(n + 1):(n + v + 1)]
       res.n.d[k,] <- res.temp[(n + v + 2):(n + v + 1 + v + 1)]
-    }else if(rank[k] %in% c(1, 2)){
-      res.who[k,] <- which(rank == 1)
+    }else if(rank[k] == 1){
+      res.who[k,] <- k
     }else{
-      res.who[k,] <- which(rank == (rank[k] - 1))
+      res.who[k,] <- which(rank == max(rank[rank < rank[k]]))
     }
   }
   results <- list(res.target = res.who, res.pos.d = res.p.d, res.neg.d = res.n.d, res.eff.gap = eff[res.who] - eff)

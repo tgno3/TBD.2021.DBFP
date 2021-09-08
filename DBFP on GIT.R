@@ -121,12 +121,15 @@ for(m in 202006:202012){
       id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
   
       # Empty box for results
-      res.score.s1 <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- res.group.s1 <- res.group.s2 <- res.wsum.s1 <- res.wsum.s2 <- rep(NA, nrow(df.temp.12))
-      res.score.s3 <- res.rank.s3 <- res.group.s3 <- res.wsum.s3 <- rep(NA, nrow(df.temp.mw))
-      rank.calc.s1 <- rep(NA, length(id.calc.s1))
-      rank.calc.s2 <- rep(NA, length(id.calc.s2))
-      rank.calc.s3 <- rep(NA, length(id.calc.s3))
-
+      res.score.s1   <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- res.group.s1 <- res.group.s2 <- res.wsum.s1 <- res.wsum.s2 <- rep(NA, nrow(df.temp.12))
+      res.score.s3   <- res.rank.s3 <- res.group.s3 <- res.wsum.s3 <- rep(NA, nrow(df.temp.mw))
+      rank.calc.s1   <- rep(NA, length(id.calc.s1))
+      rank.calc.s2   <- rep(NA, length(id.calc.s2))
+      rank.calc.s3   <- rep(NA, length(id.calc.s3))
+      res.tar.sbm.s1 <- array(NA, c(nrow(df.temp.12), length(id.y.s1))); res.tar.sup.s1 <- array(NA, c(nrow(df.temp.12), 1 + length(id.x.s1) + length(id.y.s1)))
+      res.tar.sbm.s2 <- array(NA, c(nrow(df.temp.12), length(id.y.s2))); res.tar.sup.s2 <- array(NA, c(nrow(df.temp.12), 1 + length(id.x.s2) + length(id.y.s2)))
+      res.tar.sbm.s3 <- array(NA, c(nrow(df.temp.mw), length(id.y.s3))); res.tar.sup.s3 <- array(NA, c(nrow(df.temp.mw), 1 + length(id.x.s3) + length(id.y.s3)))
+      
       
       ###############
       # Scoring
@@ -256,8 +259,8 @@ for(m in 202006:202012){
       #################
       # Stage 1
       # SBM target
-      tar.calc.sbm.s1 <- res.s1.sa$lambda %*% as.matrix(cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
-                                                        max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
+      tar.calc.sbm.s1 <- res.s1$lambda %*% as.matrix(cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
+                                                     max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
       res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]), floor(max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
       res.tar.sbm.s1[which(res.rank.s1 == 1),] <- as.matrix(df.temp.12[id.calc.s1, id.y.s1][which(res.rank.s1[id.calc.s1] == 1),])
       
@@ -267,7 +270,7 @@ for(m in 202006:202012){
   
       # Stage 2
       # SBM target
-      tar.calc.sbm.s2 <- res.s2.sa$lambda %*% as.matrix(df.temp.12[id.calc.s2, id.y.s2])
+      tar.calc.sbm.s2 <- res.s2$lambda %*% as.matrix(df.temp.12[id.calc.s2, id.y.s2])
       res.tar.sbm.s2[id.calc.s2,] <- as.matrix(tar.calc.sbm.s2)
       res.tar.sbm.s2[which(res.rank.s2 == 1),] <- as.matrix(df.temp.12[id.calc.s2, id.y.s2][which(res.rank.s2[id.calc.s2] == 1),])
       
