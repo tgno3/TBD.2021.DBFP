@@ -119,7 +119,7 @@ for(m in 202006:202012){
       id.excd.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) <  2))
       id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
       id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
-  
+      
       # Empty box for results
       res.score.s1   <- res.score.s2 <- res.rank.s1 <- res.rank.s2 <- res.group.s1 <- res.group.s2 <- res.wsum.s1 <- res.wsum.s2 <- rep(NA, nrow(df.temp.12))
       res.score.s3   <- res.rank.s3 <- res.group.s3 <- res.wsum.s3 <- rep(NA, nrow(df.temp.mw))
@@ -173,7 +173,7 @@ for(m in 202006:202012){
       res.score.s1[id.calc.s1] <- res.s1$eff * res.s1.se$eff^0.1
       res.score.s2[id.calc.s2] <- res.s2$eff * res.s2.se$eff^0.1
       res.score.s3[id.calc.s3] <- res.s3$eff * res.s3.se$eff^0.1
-  
+      
       
       #################
       # Ranking 
@@ -220,7 +220,7 @@ for(m in 202006:202012){
       if(length(id.ny.s ) > 0) res.wsum.s2[id.calc.s2][id.ny.s ] <- as.matrix(ny.sum[id.ny.s , 1:2]) %*% w.s2.y1.y2
       if(length(id.ny.m ) > 0) res.wsum.s2[id.calc.s2][id.ny.m ] <- as.matrix(ny.sum[id.ny.m , 1:2]) %*% w.s2.y1.y2
       if(length(id.ny.l ) > 0) res.wsum.s2[id.calc.s2][id.ny.l ] <- as.matrix(ny.sum[id.ny.l , 1:2]) %*% w.s2.y1.y2
-  
+      
       # Stage 3
       # XS(<Q1) vs S(<Q2) vs M(<Q3) vs L
       w.s3.ef.ws <- -c(0.5, 0.5) * c(100, 10); w.s3.y1.y2 <- c(0.3, 0.7)
@@ -252,7 +252,7 @@ for(m in 202006:202012){
       res.score.s1[id.excd.s1] <- 0
       res.score.s2[id.excd.s2] <- 0
       res.score.s3[id.excd.s3] <- 0
-  
+      
       
       #################
       # Targeting
@@ -260,14 +260,16 @@ for(m in 202006:202012){
       # Stage 1
       # SBM target
       tar.calc.sbm.s1 <- res.s1$lambda %*% as.matrix(cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
-                                                     max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
+                                                           max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
       res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]), floor(max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
       res.tar.sbm.s1[which(res.rank.s1 == 1),] <- as.matrix(df.temp.12[id.calc.s1, id.y.s1][which(res.rank.s1[id.calc.s1] == 1),])
       
       # Scaled-up target
       id.tar.sup.s1 <- target.scale.up(df.temp.12[id.calc.s1, id.x.s1], df.temp.12[id.calc.s1, id.y.s1], res.score.s1[id.calc.s1]*100, res.rank.s1[id.calc.s1], 10, 3)$res.target
       res.tar.sup.s1[id.calc.s1,] <- as.matrix(df.temp.12[id.calc.s1, c(2, id.x.s1, id.y.s1)][id.tar.sup.s1,])
-  
+      
+      # View(cbind(df.temp.12[id.calc.s1, c(id.x.s1, id.y.s1)], res.score.s1[id.calc.s1], res.rank.s1[id.calc.s1], res.tar.sbm.s1[id.calc.s1,], res.tar.sup.s1[id.calc.s1,]))
+      
       # Stage 2
       # SBM target
       tar.calc.sbm.s2 <- res.s2$lambda %*% as.matrix(df.temp.12[id.calc.s2, id.y.s2])
@@ -277,8 +279,24 @@ for(m in 202006:202012){
       # Scaled-up target
       id.tar.sup.s2 <- target.scale.up(df.temp.12[id.calc.s2, id.x.s2], df.temp.12[id.calc.s2, id.y.s2], res.score.s2[id.calc.s2]*100, res.rank.s2[id.calc.s2], c(10^10, 10^6, 1, 1, 10^-2), efc = T)$res.target
       res.tar.sup.s2[id.calc.s2,] <- as.matrix(df.temp.12[id.calc.s2, c(2, id.x.s2, id.y.s2)][id.tar.sup.s2,])
-  
+      
       # View(cbind(df.temp.12[id.calc.s2, c(id.x.s2, id.y.s2)], res.score.s2[id.calc.s2], res.rank.s2[id.calc.s2], res.tar.sbm.s2[id.calc.s2,], res.tar.sup.s2[id.calc.s2,]))
+      
+      # Stage 3
+      # SBM target
+      tar.calc.sbm.s3 <- res.s3$lambda %*% as.matrix(cbind(df.temp.mw[id.calc.s3, id.y.s3[1]], 
+                                                           max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[2]],
+                                                           max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - df.temp.mw[id.calc.s3, id.y.s3[3]]))
+      res.tar.sbm.s3[id.calc.s3,] <- as.matrix(data.frame(tar.calc.sbm.s3[,1], 
+                                                          round(max(df.temp.mw[id.calc.s3, id.y.s3[2]]) + 1 - tar.calc.sbm.s3[,2]),
+                                                          round(max(df.temp.mw[id.calc.s3, id.y.s3[3]]) + 1 - tar.calc.sbm.s3[,3])))
+      res.tar.sbm.s3[which(res.rank.s3 == 1),] <- as.matrix(df.temp.mw[id.calc.s3, id.y.s3][which(res.rank.s3[id.calc.s3] == 1),])
+      
+      # Scaled-up target
+      id.tar.sup.s3 <- target.scale.up(df.temp.mw[id.calc.s3, id.x.s3], df.temp.mw[id.calc.s3, id.y.s3], res.score.s3[id.calc.s3]*100, res.rank.s3[id.calc.s3], 10, c(2, 3), nd = T)$res.target
+      res.tar.sup.s3[id.calc.s3,] <- as.matrix(df.temp.mw[id.calc.s3, c(2, id.x.s3, id.y.s3)][id.tar.sup.s3,])
+      
+      # View(cbind(df.temp.mw[id.calc.s3, c(id.x.s3, id.y.s3)], res.score.s3[id.calc.s3], res.rank.s3[id.calc.s3], res.tar.sbm.s3[id.calc.s3,], res.tar.sup.s3[id.calc.s3,]))
       
       
       # Summary
@@ -302,7 +320,7 @@ for(m in 202006:202012){
                                                        Rank.s2    = res.rank.s2,
                                                        Target.sbm = res.tar.sbm.s2,
                                                        Target.sup = res.tar.sup.s2))
-  
+      
       res.all.s3 <- rbind(res.all.s3, data.frame(Closed.m   = m,
                                                  B.unit     = df.temp.mw[,4],
                                                  B.branch   = df.temp.mw[,5],
@@ -369,8 +387,8 @@ for(m in 202006:202012){
       id.excd.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) <  2))
       id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
       id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
-
-            
+      
+      
       #################
       # Ranking 
       #################
@@ -378,7 +396,7 @@ for(m in 202006:202012){
       s1.ts.ys.xs <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[2]
       s1.ts.ys.s  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[3]
       s1.ts.ys.m  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[5]
-
+      
       # Stage 2
       # s2.ts.all.y1 <- s2.ts.all.y2 <- rep(NA, 11)
       # for(s in 1:11){
@@ -403,7 +421,7 @@ for(m in 202006:202012){
       s3.ts.y.xs <- summary(y)[2]
       s3.ts.y.s  <- summary(y)[3]
       s3.ts.y.m  <- summary(y)[5]
-
+      
       # Summary
       res.s1.all.q <- rbind(res.s1.all.q, matrix(c(m, i, j, s1.ts.ys.xs, s1.ts.ys.s, s1.ts.ys.m), nrow = 1))
       # res.s2.all.q <- rbind(res.s2.all.q, matrix(c(s2.ts.all.y1, s2.ts.all.y2), nrow = 1))
@@ -728,5 +746,3 @@ dm.sbm(df.from[,1:2], df.from[,3:4], "vrs")$eff[id] * 100
 dm.sbm(df.to  [,1:2], df.to  [,3:4], "vrs")$eff[id] * 100
 round(df.br.7.3d[which(df.br.7.3d[,2,1] == name), c(id.x.s2.m, id.y.s2.m),(from - 202005):(to - 202005)])
 cbind(FS = df.s2.fs[from - 202005, 3], MI = df.s2.mi[from - 202005, 3])
-
-
