@@ -77,7 +77,7 @@ target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = 
       res.who[k,] <- which(res.temp[1:n] > 0)
       res.p.d[k,] <- res.temp[(n + 1):(n + v + 1)]
       res.n.d[k,] <- res.temp[(n + v + 2):(n + v + 1 + v + 1)]
-    }else if(rank[k] == 1){
+    }else if(rank[k] == 1 | max(rowSums(cbind(xdata, 0)[which(rank <= rank[k]),, drop = F])) == rowSums(cbind(xdata, 0))[k]){
       res.who[k,] <- k
     }else{
       res.who[k,] <- which(rank == max(rank[rank < rank[k]]))
