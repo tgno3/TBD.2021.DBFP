@@ -72,7 +72,6 @@ target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = 
 
     # Solve
     if(solve.lpExtPtr(lp.tsu) == 0){
-      solve.lpExtPtr(lp.tsu)  
       res.temp    <- get.variables(lp.tsu)
       res.who[k,] <- which(res.temp[1:n] > 0)
       res.p.d[k,] <- res.temp[(n + 1):(n + v + 1)]
@@ -80,7 +79,9 @@ target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = 
     }else if(rank[k] == 1 | max(rowSums(cbind(xdata, 0)[which(rank <= rank[k]),, drop = F])) == rowSums(cbind(xdata, 0))[k]){
       res.who[k,] <- k
     }else{
-      res.who[k,] <- which(rank == max(rank[rank < rank[k]]))
+      id.r.higher  <- which(rank < rank[k])
+      id.x.greater <- which(rowSums(cbind(xdata, 0)) > rowSums(cbind(xdata, 0))[k])
+      res.who[k,]  <- which(rowSums(cbind(xdata, 0)) == min(rowSums(cbind(xdata, 0))[intersect(id.r.higher, id.x.greater)]))[1]
     }
   }
   results <- list(res.target = res.who, res.pos.d = res.p.d, res.neg.d = res.n.d, res.eff.gap = eff[res.who] - eff)
