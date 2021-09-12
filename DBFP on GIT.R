@@ -15,9 +15,10 @@ sapply(pkgs, require, character.only = T)
 # Load data & parameters
 load("DBFP.2003.2012.Rdata")
 
-# Switch for MW vs SA
-e.type <- "mw"
-
+# Switch
+m.type <- "mw" # month-wise(mw) vs sliding aggregate(sa)
+e.type <- "br" # fp(fp) vs branch(br)
+  
 
 #########################################################################################################################
 ### Data cleansing
@@ -27,8 +28,7 @@ e.type <- "mw"
 id.out.level   <- which( is.na(match(df.raw[,3], c(100, 101, 102, 109, 112))))
 id.out.branch  <- which(!is.na(match(df.raw[,5], c(8262, 8312, 8335, 8354))))
 id.out.bunit   <- which(!is.na(match(df.raw[,4], c(74, NA))))
-id.out.month   <- which(df.raw[,10] %in% c(1, 2, 3))
-#id.out.zero.s1 <- which(rowSums(df.raw[,c(17, 18)]) == 0)
+id.out.month   <- if(e.type == "fp") which(df.raw[,10] %in% c(1, 2, 3)) else NULL
 
 # Effective data
 id.out.all <- unique(c(id.out.level, id.out.branch, id.out.bunit, id.out.month))
@@ -64,15 +64,6 @@ df.eff.sa[,20] <- df.eff.sa[,20]/3
 
 # Only consider the same FP for mw
 #df.fp.mw <- df.fp.mw[df.fp.mw[,2] %in% df.fp.sa[,2],]
-
-# IDs
-id.x.s1  <- c(13:16)
-id.y.s1  <- c(17:19)
-id.x.s2  <- c(17:18)
-id.y.s2  <- c(20:21)
-id.x.s3  <- c(22)
-id.y.s3  <- c(25, 37, 45)
-id.v.all <- c(id.x.s1, id.y.s1, id.y.s2, id.x.s3, id.y.s3)
 
 
 #########################################################################################################################
@@ -113,7 +104,7 @@ for(m in 202003:202012){
       df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
       
       # IDs for evaluation
-      df.temp.12 <- if(e.type == "mw") df.temp.mw else df.temp.sa
+      df.temp.12 <- if(m.type == "mw") df.temp.mw else df.temp.sa
       id.calc.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
       id.excd.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
       id.calc.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) == 2))
@@ -304,7 +295,7 @@ for(m in 202003:202012){
       res.all.s1.s2 <- rbind(res.all.s1.s2, data.frame(Closed.m   = m,
                                                        B.unit     = df.temp.12[,4],
                                                        B.branch   = df.temp.12[,5],
-                                                       FP.e.type  = i,
+                                                       FP.m.type  = i,
                                                        FP.m.type  = j,
                                                        FP.month   = df.temp.12[,10],
                                                        FP.id      = df.temp.12[,2],
@@ -383,7 +374,7 @@ for(m in 202006:202012){
       df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
       
       # IDs for evaluation
-      df.temp.12 <- if(e.type == "mw") df.temp.mw else df.temp.sa
+      df.temp.12 <- if(m.type == "mw") df.temp.mw else df.temp.sa
       id.calc.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
       id.excd.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
       id.calc.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) == 2))
@@ -446,6 +437,7 @@ write.csv(res.all.q, file = "res.all.q.csv")
 
 # Loop for all periods
 res.all.br <- data.frame()
+id.v.all   <- c(id.x.s1, id.y.s1, id.y.s2, id.x.s3, id.y.s3)
 for(m in 202003:202012){
   
   # Data of evaluation
@@ -466,6 +458,9 @@ for(m in 202003:202012){
       id.temp <- which(df.fp.mw[,8] == 2)
       df.temp <- aggregate(df.fp.mw[id.temp, id.v.all], list(df.fp.mw[id.temp, 5]), sum)
     }
+    
+    # Average for comprehensive profit margin
+    df.temp[,9] <- aggregate(df.fp.mw[id.temp, id.y.s2[1]], list(df.fp.mw[id.temp, 5]), mean)[,2]
     
     # IDs for evaluation
     id.calc.s1 <- which(apply(df.temp[,6:7],  1, function(x) sum(x) >  0))
@@ -595,6 +590,9 @@ for(m in 202003:202012){
     if(length(id.ny.s ) > 0) res.wsum.s3[id.calc.s3][id.ny.s ] <- as.matrix(ny[id.ny.s, ]) %*% w.s3.y1.y2
     if(length(id.ny.m ) > 0) res.wsum.s3[id.calc.s3][id.ny.m ] <- as.matrix(ny[id.ny.m, ]) %*% w.s3.y1.y2
     if(length(id.ny.l ) > 0) res.wsum.s3[id.calc.s3][id.ny.l ] <- as.matrix(ny[id.ny.l, ]) %*% w.s3.y1.y2
+    
+    # NaN to 50
+    res.wsum.s1[is.nan(res.wsum.s1)] <- res.wsum.s2[is.nan(res.wsum.s2)] <- res.wsum.s3[is.nan(res.wsum.s3)] <- 50
     
     # Rank
     res.rank.s1[id.excd.s1] <- res.rank.s2[id.excd.s2] <- res.rank.s3[id.excd.s3] <- nrow(df.temp)
