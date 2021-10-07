@@ -253,7 +253,7 @@ for(m in 202003:202012){
       # SBM target
       tar.calc.sbm.s1 <- res.s1$lambda %*% as.matrix(cbind(df.temp.12[id.calc.s1, id.y.s1[1:2]] + 1, 
                                                            max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - df.temp.12[id.calc.s1, id.y.s1[3]]))
-      res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]), floor(max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
+      res.tar.sbm.s1[id.calc.s1,] <- as.matrix(data.frame(ceiling(tar.calc.sbm.s1[,1:2]) - 1, floor(max(df.temp.12[id.calc.s1, id.y.s1[3]]) + 1 - round(tar.calc.sbm.s1[,3], 4))))
       res.tar.sbm.s1[which(res.rank.s1 == 1),] <- as.matrix(df.temp.12[id.calc.s1, id.y.s1][which(res.rank.s1[id.calc.s1] == 1),])
       
       # Scaled-up target
