@@ -108,8 +108,7 @@ res.bm <- list(Main = unlist(c(stat.me.product.ratio[which(stat.me.product.ratio
 #########################################################################################################################
 
 # Plates
-res.all <- data.frame()
-# m<-202109;i<-1;j<-3;k<-53
+res.all.fp <- data.frame()
 
 # Loop for all periods
 for(m in nm.m){
@@ -351,20 +350,23 @@ for(m in nm.m){
     }
   }
   # write.csv(res.all.m[order(res.all.m[,2]),], file = "benchmark.csv")
-  res.all <- rbind(res.all, res.all.m[order(res.all.m[,2]),])
+  res.all.fp <- rbind(res.all.fp, res.all.m[order(res.all.m[,2]),])
 }
 
-write.csv(res.all, file = "res.all.csv")
+write.csv(res.all.fp, file = "res.all.fp.csv")
 
 
 #########################################################################################################################
 ### Branch Evaluation
 #########################################################################################################################
 
-# Loop for all periods
-res.all.br <- data.frame()
 id.v.all   <- c(id.x.s1, id.y.s1, id.y.s2, id.x.s3, id.y.s3)
-for(m in 202003:202012){
+
+# Plate
+res.all.br <- data.frame()
+
+# Loop for all periods
+for(m in nm.m){
   
   # Data of evaluation
   df.fp.mw <- df.eff.mw[df.eff.mw[,1] == m,]
@@ -396,7 +398,7 @@ for(m in 202003:202012){
     id.calc.s3 <- which(df.temp[,12] >  0)
     id.excd.s3 <- which(df.temp[,12] <= 0)
     
-    # Empty box for results
+    # Plates
     res.score.s1 <- res.score.s2 <- res.score.s3 <- rep(NA, nrow(df.temp))
     res.rank.s1  <- res.rank.s2  <- res.rank.s3  <- rep(NA, nrow(df.temp))
     res.group.s1 <- res.group.s2 <- res.group.s3 <- rep(NA, nrow(df.temp))
