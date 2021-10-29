@@ -109,9 +109,10 @@ res.bm <- list(Main = unlist(c(stat.me.product.ratio[which(stat.me.product.ratio
 
 # Plates
 res.all <- data.frame()
+# m<-202109;i<-1;j<-3;k<-53
 
 # Loop for all periods
-for(m in 202011:202108){
+for(m in nm.m){
   
   # Data of interest
   df.fp.mw <- df.eff.mw[df.eff.mw[,1] == m,]
@@ -125,7 +126,7 @@ for(m in 202011:202108){
   
   # Plates
   res.all.m <- data.frame()
-  
+
   # Productivity analysis
   for(i in 1:2){
     for(j in 1:5){
@@ -279,6 +280,11 @@ for(m in 202011:202108){
       res.rank.s2[id.calc.s2] <- rank.calc.s2
       res.rank.s3[id.calc.s3] <- rank.calc.s3
       
+      # Grade
+      res.grade.s1 <- ifelse(res.rank.s1 < length(res.rank.s1)/3, "A", ifelse(res.rank.s1 < length(res.rank.s1)*2/3, "B", "C"))
+      res.grade.s2 <- ifelse(res.rank.s2 < length(res.rank.s2)/3, "A", ifelse(res.rank.s2 < length(res.rank.s2)*2/3, "B", "C"))
+      res.grade.s3 <- ifelse(res.rank.s3 < length(res.rank.s3)/3, "A", ifelse(res.rank.s3 < length(res.rank.s3)*2/3, "B", "C"))
+      
       
       #################
       # Targeting
@@ -325,115 +331,30 @@ for(m in 202011:202108){
       # View(cbind(df.temp.mw[id.calc.s3, c(id.x.s3, id.y.s3)], res.score.s3[id.calc.s3], res.rank.s3[id.calc.s3], res.tar.sbm.s3[id.calc.s3,], res.tar.sup.s3[id.calc.s3,]))
       
       # Scaled-up target at once
-      id.tar.sup  <- target.scale.up(df.temp.mw[,id.n.l.t], df.temp.mw[,id.n.g.t], df.temp.mw[,id.flex])$res.target
-      res.tar.sup <- df.temp.mw[id.tar.sup, 2]
+      # nl.data <- df.temp.mw[,id.n.l.t];ng.data <- df.temp.mw[,id.n.g.t]; fx.data <- df.temp.mw[,id.flex]; w <- c(1, 1, 1, 1.1, 1.1, 1.1); max.slack <- NULL; time.out <- 10
+      res.who     <- target.scale.up(df.temp.mw[,id.n.l.t], df.temp.mw[,id.n.g.t], df.temp.mw[,id.flex], w = c(1, 1, 1, 1.1, 1.1, 1.1), time.out = 10)$res.target
+      res.tar.sup <- df.temp.mw[res.who, 2]
       
       # Results
-      res.all.m <- rbind(res.all, data.frame(Closed.m   = m,
-                                             FP.id      = df.temp.mw[,2],
-                                             Target.sup = res.tar.sup))
+      res.all.m <- rbind(res.all.m, data.frame(Closed.m   = m,
+                                               FP.id      = df.temp.mw[,2],
+                                               Rank.s1    = res.rank.s1,
+                                               n.s1       = length(res.rank.s1),
+                                               Grade.s1   = res.grade.s1,
+                                               Rank.s2    = res.rank.s2,
+                                               n.s2       = length(res.rank.s2),
+                                               Grade.s2   = res.grade.s2,
+                                               Rank.s3    = res.rank.s3,
+                                               n.s3       = length(res.rank.s3),
+                                               Grade.s3   = res.grade.s3,
+                                               Target.sup = res.tar.sup))
     }
   }
-  write.csv(res.all.m[order(res.all.m[,2]),], file = "benchmark.csv")
-  res.all <- rbind(res.all, res.all.m)
+  # write.csv(res.all.m[order(res.all.m[,2]),], file = "benchmark.csv")
+  res.all <- rbind(res.all, res.all.m[order(res.all.m[,2]),])
 }
 
-write.csv(res.all.m.s1.s2, file = "res.s1.s2.csv")
-write.csv(res.all.m.s3, file = "res.s3.csv")
-
-
-# Extract thresholds
-res.all.q <- data.frame()
-for(m in 202006:202012){
-  
-  # Data
-  df.fp.mw <- df.eff.mw[df.eff.mw[,1] == m,]
-  df.fp.sa <- df.eff.sa[df.eff.sa[,1] == m,]
-  
-  # Insert churns aggregated 
-  df.fp.mw$agg.churn <- rowSums(df.fp.mw[,42:44])
-  
-  # Sub-grouping
-  id.m.02.06.sa <- which(df.fp.sa[,10] < 07)
-  id.m.07.12.sa <- which(df.fp.sa[,10] > 06 & df.fp.sa[,10] < 13)
-  id.m.13.24.sa <- which(df.fp.sa[,10] > 12 & df.fp.sa[,10] < 25)
-  id.m.25.60.sa <- which(df.fp.sa[,10] > 24 & df.fp.sa[,10] < 61)
-  id.m.61.00.sa <- which(df.fp.sa[,10] > 60)
-  id.m.02.06.mw <- which(df.fp.mw[,10] < 07)
-  id.m.07.12.mw <- which(df.fp.mw[,10] > 06 & df.fp.mw[,10] < 13)
-  id.m.13.24.mw <- which(df.fp.mw[,10] > 12 & df.fp.mw[,10] < 25)
-  id.m.25.60.mw <- which(df.fp.mw[,10] > 24 & df.fp.mw[,10] < 61)
-  id.m.61.00.mw <- which(df.fp.mw[,10] > 60)
-  
-  # Productivity analysis
-  res.s1.all.q <- res.s2.all.q <- res.s3.all.q <- data.frame()
-  for(i in 1:2){
-    for(j in 1:5){
-      
-      # Sub-grouping
-      id.type.sa <- if(i == 1) which(df.fp.sa[,9] == 1) else which(df.fp.sa[,9] == 0)
-      id.type.mw <- if(i == 1) which(df.fp.mw[,9] == 1) else which(df.fp.mw[,9] == 0)
-      id.m.sa    <- if(j == 1) id.m.02.06.sa else if(j == 2) id.m.07.12.sa else if(j == 3) id.m.13.24.sa else if(j == 4) id.m.25.60.sa else id.m.61.00.sa
-      id.m.mw    <- if(j == 1) id.m.02.06.mw else if(j == 2) id.m.07.12.mw else if(j == 3) id.m.13.24.mw else if(j == 4) id.m.25.60.mw else id.m.61.00.mw
-      df.temp.sa <- df.fp.sa[intersect(id.type.sa, id.m.sa),]
-      df.temp.mw <- df.fp.mw[intersect(id.type.mw, id.m.mw),]
-      
-      # IDs for evaluation
-      df.temp.12 <- if(m.type == "mw") df.temp.mw else df.temp.sa
-      id.calc.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) >  0))
-      id.excd.s1 <- which(apply(df.temp.12[,id.y.s1[1:2]], 1, function(x) sum(x) == 0))
-      id.calc.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) == 2))
-      id.excd.s2 <- which(apply(df.temp.12[,id.y.s2], 1, function(x) sum(x > 0) <  2))
-      id.calc.s3 <- which(df.temp.mw[,id.y.s3[1]] >  0)
-      id.excd.s3 <- which(df.temp.mw[,id.y.s3[1]] <= 0)
-      
-      
-      #################
-      # Ranking 
-      #################
-      # Stage 1
-      s1.ts.ys.xs <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[2]
-      s1.ts.ys.s  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[3]
-      s1.ts.ys.m  <- summary(rowSums(df.temp.12[id.calc.s1, id.y.s1[1:2]]))[5]
-      
-      # Stage 2
-      # s2.ts.all.y1 <- s2.ts.all.y2 <- rep(NA, 11)
-      # for(s in 1:11){
-      #   id.group        <- which(res.s2.sa$eff < s/10 & round(res.s2.sa$eff, 8) >= (s - 1)/10)
-      #   s2.ts.all.y1[s] <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[1]])[2]
-      #   s2.ts.all.y2[s] <- summary(df.temp.sa[id.calc.s2,][id.group, id.y.s2[2]])[2]
-      # }
-      w.s2.y1.y2  <- c(0.3, 0.7)
-      ny.sum      <- nor(df.temp.12[id.calc.s2, id.y.s2[1]]) * w.s2.y1.y2[1] + nor(df.temp.12[id.calc.s2, id.y.s2[2]]) * w.s2.y1.y2[2]
-      s2.ts.ny.xs <- summary(ny.sum)[2]
-      s2.ts.ny.s  <- summary(ny.sum)[3]
-      s2.ts.ny.m  <- summary(ny.sum)[5]
-      
-      # Stage 3
-      # s3.ts.all.y1 <- rep(NA, 11)
-      # for(s in 1:11){
-      #   id.group        <- which(res.s3.mw$eff < s/10 & round(res.s3.mw$eff, 8) >= (s - 1)/10)
-      #   s3.ts.all.y1[s] <- summary(df.temp.mw[id.calc.s3,][id.group, id.y.s3[1]])[2]
-      # }
-      w.s3.y1.y2 <- c(0.3, 0.7)
-      y          <- df.temp.mw[id.calc.s3, id.y.s3[1]]
-      s3.ts.y.xs <- summary(y)[2]
-      s3.ts.y.s  <- summary(y)[3]
-      s3.ts.y.m  <- summary(y)[5]
-      
-      # Summary
-      res.s1.all.q <- rbind(res.s1.all.q, matrix(c(m, i, j, s1.ts.ys.xs, s1.ts.ys.s, s1.ts.ys.m), nrow = 1))
-      # res.s2.all.q <- rbind(res.s2.all.q, matrix(c(s2.ts.all.y1, s2.ts.all.y2), nrow = 1))
-      res.s2.all.q <- rbind(res.s2.all.q, matrix(c(s2.ts.ny.xs, s2.ts.ny.s, s2.ts.ny.m), nrow = 1))
-      # res.s3.all.q <- rbind(res.s3.all.q, matrix(c(s3.ts.all.y1), nrow = 1))
-      res.s3.all.q <- rbind(res.s3.all.q, matrix(c(s3.ts.y.xs, s3.ts.y.s, s3.ts.y.m), nrow = 1))
-      
-    }
-  }
-  res.all.q <- rbind(res.all.q, data.frame(res.s1.all.q, res.s2.all.q, res.s3.all.q))
-}
-
-write.csv(res.all.q, file = "res.all.q.csv")
+write.csv(res.all, file = "res.all.csv")
 
 
 #########################################################################################################################
