@@ -313,59 +313,75 @@ for(m in nm.m){
 #########################################################################################################################
 
 # Parameters
-crm.m     <- 202109
-m.pre     <- df.eff.mw[,1] == (crm.m - 1)
-l.six     <- df.eff.mw[,1] %in% tail(nm.m[nm.m < crm.m], 6)
-df.six.mw <- aggregate(df.eff.mw[l.six, c(16, 22, 45, 50, seq(70, 88, 2), seq(71, 89, 2))], list(df.eff.mw[l.six, 2]), "sum")
-df.six.mw <- cbind(df.six.mw, aggregate(df.eff.mw[l.six, c(68, 69)] * df.eff.mw[l.six, 45], list(df.eff.mw[l.six, 2]), "sum"))
-id.sa.kpi <- c(15, 16, 22, 25, 26, 27, 30, 32, 33, 35, 37, 45, 50, 54, 57, 58, 61, 62, 63, 67, 68, 69, 90, 93)
+m.now       <- 202110
+m.pre       <- df.eff.mw[,1] == (m.now - 1)
+m.six       <- df.eff.mw[,1] %in% tail(nm.m[nm.m < m.now], 6)
+id.sa.kpi.m <- c(15, 16, 22, 25, 26, 27, 30, 32, 33, 35, 37, 45, 50, 54, 57, 58, 61, 62, 63, 67, 68, 69, 90, 93)
+id.sa.kpi.d <- c(15, 18:23, 25:36)
+df.agg.dw   <- cbind(aggregate(df.eff.dw[,c(id.sa.kpi.d, seq(37, 55, 2), seq(38, 56, 2))], list(df.eff.dw[,2]), "sum"))
+df.six.mw   <- cbind(aggregate(df.eff.mw[m.six, c(16, 22, 45, 50, 67, seq(70, 88, 2), seq(71, 89, 2))], list(df.eff.mw[m.six, 2]), "sum"),
+                     aggregate(df.eff.mw[m.six, c(68, 69)] * df.eff.mw[m.six, 45], list(df.eff.mw[m.six, 2]), "sum"))
 
 # P1. Sales Outcome
-# res.so.now.d <- list(Product.ratio   = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(71, 89, 2)]/rowSums(df.eff.mw[m.pre, seq(71, 89, 2)])),
-#                      Product.premium = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(71, 89, 2)]),
-#                      Product.count   = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(70, 88, 2)]),
-#                      KPI             = cbind(df.eff.mw[m.pre, 1:2], data.frame(Premium.total = df.eff.mw[m.pre, 50],
-#                                                                                Premium.p.total     = df.eff.mw[m.pre, 50]/df.eff.mw[m.pre, 45],
-#                                                                                Count               = df.eff.mw[m.pre, 45],
-#                                                                                Contract.p.design   = df.eff.mw[m.pre, 30],
-#                                                                                Age.contractor      = df.eff.mw[m.pre, 68],
-#                                                                                Age.insurant        = df.eff.mw[m.pre, 69],
-#                                                                                Contract.p.design   = df.eff.mw[m.pre, 32])))
+res.so.agg.d <- list(Product.ratio   = cbind(df.agg.dw[1], df.agg.dw[31:40]/rowSums(df.agg.dw[31:40])),
+                     Product.premium = cbind(df.agg.dw[1], df.agg.dw[31:40]),
+                     Product.count   = cbind(df.agg.dw[1], df.agg.dw[21:30]),
+                     KPI             = cbind(df.agg.dw[1], data.frame(Premium.total     = df.agg.dw[16],
+                                                                      Premium.p.total   = df.agg.dw[16]/df.agg.dw[15],
+                                                                      Premium.cvt.total = df.agg.dw[20],
+                                                                      Count             = df.agg.dw[15],
+                                                                      Contract.p.design = df.agg.dw[15]/df.agg.dw[7],
+                                                                      Contract.v.online = df.agg.dw[17],
+                                                                      Cancel.return     = df.agg.dw[13],
+                                                                      # Age.contractor    = df.agg.dw[28]/df.six.mw[4],
+                                                                      # Age.insurant      = df.agg.dw[29]/df.six.mw[4],
+                                                                      Contract.p.design = df.agg.dw[15]/df.agg.dw[8])))
 
+# write.csv(cbind(res.so.agg.d$Product.ratio, res.so.agg.d$Product.premium[,-1], res.so.agg.d$Product.count[,-1], res.so.agg.d$KPI[,-1]), file = "res.so.agg.d.csv")
 
 res.so.pre.m <- list(Product.ratio   = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(71, 89, 2)]/rowSums(df.eff.mw[m.pre, seq(71, 89, 2)])),
                      Product.premium = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(71, 89, 2)]),
                      Product.count   = cbind(df.eff.mw[m.pre, 1:2], df.eff.mw[m.pre, seq(70, 88, 2)]),
-                     KPI             = cbind(df.eff.mw[m.pre, 1:2], data.frame(Premium.total = df.eff.mw[m.pre, 50],
+                     KPI             = cbind(df.eff.mw[m.pre, 1:2], data.frame(Premium.total       = df.eff.mw[m.pre, 50],
                                                                                Premium.p.total     = df.eff.mw[m.pre, 50]/df.eff.mw[m.pre, 45],
+                                                                               Premium.cvt.total   = df.eff.mw[m.pre, 67],
                                                                                Count               = df.eff.mw[m.pre, 45],
                                                                                Contract.p.design   = df.eff.mw[m.pre, 30],
                                                                                Age.contractor      = df.eff.mw[m.pre, 68],
                                                                                Age.insurant        = df.eff.mw[m.pre, 69],
                                                                                Contract.p.design   = df.eff.mw[m.pre, 32])))
 
+# write.csv(cbind(res.so.pre.m$Product.ratio, res.so.pre.m$Product.premium[,-c(1:2)], res.so.pre.m$Product.count[,-c(1:2)], res.so.pre.m$KPI[,-c(1:2)]), file = "res.so.pre.m.csv")
+
 res.so.six.m <- list(Product.ratio   = cbind(df.six.mw[1], df.six.mw[16:25]/rowSums(df.six.mw[16:25])),
                      Product.premium = cbind(df.six.mw[1], df.six.mw[16:25]),
                      Product.count   = cbind(df.six.mw[1], df.six.mw[ 6:15]),
                      KPI             = cbind(df.six.mw[1], data.frame(Premium.total     = df.six.mw[5],
                                                                       Premium.p.total   = df.six.mw[5]/df.six.mw[4],
+                                                                      Premium.cvt.total = df.six.mw[6],
                                                                       Count             = df.six.mw[4],
+                                                                      Count.p.m         = df.six.mw[4]/6,
                                                                       Contract.p.design = df.six.mw[4]/df.six.mw[2],
-                                                                      Age.contractor    = df.six.mw[27]/df.six.mw[4],
-                                                                      Age.insurant      = df.six.mw[28]/df.six.mw[4],
+                                                                      Age.contractor    = df.six.mw[28]/df.six.mw[4],
+                                                                      Age.insurant      = df.six.mw[29]/df.six.mw[4],
                                                                       Contract.p.design = df.six.mw[4]/df.six.mw[3])))
 
+# write.csv(cbind(res.so.six.m$Product.ratio, res.so.six.m$Product.premium[,-1], res.so.six.m$Product.count[,-1], res.so.six.m$KPI[,-1]), file = "res.so.six.m.csv")
+
+
 # P2. Sales Activity - Monthly
-# res.sa.d <- list(Each.FP    = df.eff.mw[l.six, id.sa.kpi],
-#                  Peer.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10]), "mean"),
-#                  Stdd.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,13]), "mean"),
-#                  Crck.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,14]), "mean"))
+res.sa.d <- list(Each.FP    = df.eff.dw[order(df.eff.dw[,2], df.eff.dw[,1]), c(1, 2, id.sa.kpi.d)],
+                 Peer.Group = aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,9], df.eff.dw[,10]), "mean"),
+                 Stdd.Group = aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,9], df.eff.dw[,10], df.eff.dw[,13]), "mean"),
+                 Crck.Group = aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,9], df.eff.dw[,10], df.eff.dw[,14]), "mean"))
 
-res.sa.m <- list(Each.FP    = df.eff.mw[l.six, id.sa.kpi],
-                 Peer.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10]), "mean"),
-                 Stdd.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,13]), "mean"),
-                 Crck.Group = aggregate(df.eff.mw[,id.sa.kpi], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,14]), "mean"))
+res.sa.m <- list(Each.FP    = df.eff.mw[m.six, c(1, 2, id.sa.kpi.m)],
+                 Peer.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10]), "mean"),
+                 Stdd.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,13]), "mean"),
+                 Crck.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,14]), "mean"))
 
+# write.csv(res.sa.m$Peer.Group, file = "pg.m.csv"); write.csv(res.sa.m$Stdd.Group, file = "sg.m.csv"); write.csv(res.sa.m$Crck.Group, file = "cg.m.csv")
+# write.csv(res.sa.d$Peer.Group, file = "pg.d.csv"); write.csv(res.sa.d$Stdd.Group, file = "sg.d.csv"); write.csv(res.sa.d$Crck.Group, file = "cg.d.csv")
 
 # R3. Benchmark
 id.scale.up.target    <- which(df.eff.mw[,1] == (m - 1) & df.eff.mw[,2] == res.all.fp[which(res.all.fp[,1] == (m - 1) & res.all.fp[,2] == fp.id), 12])
@@ -386,11 +402,11 @@ res.bm <- list(Info = data.frame(Month.Closing    = df.eff.mw[id.fp, 1],
                                stat.st.product.ratio[which(stat.st.product.ratio == max(stat.st.product.ratio))], 
                                stat.bg.product.ratio[which(stat.bg.product.ratio == max(stat.bg.product.ratio))],
                                stat.bm.product.ratio[which(stat.bm.product.ratio == max(stat.bm.product.ratio))])),
-               Stat = data.frame(FP.own     = unlist(df.eff.mw[id.fp, id.sa.kpi]),
+               Stat = data.frame(FP.own     = unlist(df.eff.mw[id.fp, id.sa.kpi.m]),
                                  Same.Group = round(unlist(tail(res.sa.sg, 1)), 1),
                                  Stdd.Group = round(unlist(tail(res.sa.st, 1)), 1),
                                  Best.Group = round(unlist(tail(res.sa.bg, 1)), 1),
-                                 Benchmark  = unlist(df.eff.mw[id.scale.up.target, id.sa.kpi]))[-1,])
+                                 Benchmark  = unlist(df.eff.mw[id.scale.up.target, id.sa.kpi.m]))[-1,])
 
 
 #########################################################################################################################
