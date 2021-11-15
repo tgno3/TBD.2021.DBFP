@@ -13,12 +13,13 @@ pkgs <- c("DJL", "abind")
 sapply(pkgs, require, character.only = T)
 
 # Load data & parameters
-load("DBFP.2011.2109.Rdata")
-# load("DBFP.2011.2110.Rdata")
+load("DBFP.2011.2110.Rdata")
 
-# Naming for coding convenience
-df.raw.mw <- df.raw.2011.2109
-df.raw.dw <- df.raw.211001.211103[df.raw.211001.211103[,1] %in% 20211001:20211031,]
+# Naming and sorting for coding convenience
+df.raw.mw <- df.raw.2011.2110
+df.raw.mw <- df.raw.mw[order(df.raw.mw[,1], df.raw.mw[,2]),]
+df.raw.dw <- df.raw.211001.211108[df.raw.211001.211108[,1] %in% 20211001:20211108,]
+df.raw.dw <- df.raw.dw[order(df.raw.dw[1], df.raw.dw[2]),]
 nm.m      <- unique(df.raw.mw[,1])
 
 
@@ -39,27 +40,21 @@ id.out.month.dw  <- which(df.raw.dw[,8] %in% c(0, 1, 2, 3))
 # Effective data
 id.out.all.mw <- unique(c(id.out.level.mw, id.out.branch.mw, id.out.bunit.mw, id.out.month.mw))
 id.out.all.dw <- unique(c(id.out.level.dw, id.out.branch.dw, id.out.bunit.dw, id.out.month.dw))
-df.eff.mw     <- df.raw.mw[-id.out.all.mw,][order(df.raw.mw[-id.out.all.mw,][,1], df.raw.mw[-id.out.all.mw,][,2]),]
-df.eff.dw     <- df.raw.dw[-id.out.all.dw,][order(df.raw.dw[-id.out.all.dw,][,1], df.raw.dw[-id.out.all.dw,][,2]),]
+df.eff.mw     <- df.raw.mw[-id.out.all.mw,]
+df.eff.dw     <- df.raw.dw[-id.out.all.dw,]
 
-# Derivative variables (Coverage analysis, Withdrawal + Return)
-n.col.mw <- ncol(df.eff.mw)
-n.col.dw <- ncol(df.eff.dw)
-df.eff.mw[,n.col.mw + 1]        <- df.eff.mw[,91] + df.eff.mw[,92]
-df.eff.mw[,n.col.mw + 2]        <- df.eff.mw[,33] + df.eff.mw[,35]
-df.eff.dw[,n.col.dw + 1]        <- df.eff.dw[,20] + df.eff.dw[,21]
-names(df.eff.mw)[-(1:n.col.mw)] <- c("보장분석건수(최적+일반)", "청철+반송")
-names(df.eff.dw)[1 + n.col.dw]  <- "보장분석건수(최적+일반)"
+# Derivative variables
+df.eff.mw <- cbind(df.eff.mw, data.frame('보장분석건수(최적+일반)' = df.eff.mw[,91] + df.eff.mw[,92],
+                                         '청철+반송'               = df.eff.mw[,33] + df.eff.mw[,35]))
+df.eff.dw <- cbind(df.eff.dw, data.frame('보장분석건수(최적+일반' = df.eff.dw[,20] + df.eff.dw[,21]))
 
 # Parameters
-m.now       <- 202110
+m.now       <- 202111
 m.pre       <- df.eff.mw[,1] == (m.now - 1)
-# m.six       <- df.eff.mw[,1] %in% tail(nm.m[nm.m < m.now], 6)
 id.so.kpi.m <- c(16, 22, 30, 32, 45, 50, 67, 68, 69, 70:89)
 id.so.kpi.d <- c(15, 18:23, 25:35)
 id.sa.kpi.d <- c(19, 22, 23, 25, 29, 33, 15, 20, 21)
 id.sa.kpi.m <- c(15, 16, 22, 25, 26, 27, 37, 91, 92, 67, 93, 94)
-# id.sa.kpi.m <- c(15, 16, 22, 25, 26, 27, 30, 32, 33, 35, 37, 45, 50, 54, 57, 58, 61, 62, 63, 67, 68, 69, 90, 93)
 
 
 #########################################################################################################################
@@ -311,9 +306,9 @@ for(m in nm.m){
     }
   }
   # write.csv(res.all.m[order(res.all.m[,2]),], file = "benchmark.csv")
-  res.all.fp <- rbind(res.all.fp, res.all.m[order(res.all.m[,2:4]),])
+  res.all.fp <- rbind(res.all.fp, res.all.m[order(res.all.m[,2], res.all.m[,3], res.all.m[,4]),])
 }
-# write.csv(res.all.fp, file = "res.all.fp.2.csv")
+# write.csv(res.all.fp[complete.cases(res.all.fp),], file = "res.all.fp.csv")
 
 
 #########################################################################################################################
@@ -406,11 +401,6 @@ df.br.so.mw <- aggregate(cbind(df.eff.mw[,id.so.kpi.m], df.eff.mw[,68:69] * df.e
 df.br.sa.dw <- aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,5]), "sum")
 df.br.sa.mw <- aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,5]), "sum")
 
-
-# df.fp.agg.dw.br <- cbind(df.fp.agg.dw, branch = sapply(df.fp.agg.dw[,1], function(x) df.eff.dw[df.eff.dw[,2] == x, 5][1]))
-# df.br.so.mw    <- cbind(aggregate(df.eff.mw[,c(16, 22, 45, 50, 67, seq(70, 88, 2), seq(71, 89, 2))], list(df.eff.mw[,1], df.eff.mw[,5]), "sum"),
-#                          aggregate(df.eff.mw[,c(68, 69)] * df.eff.mw[,45], list(df.eff.mw[,1], df.eff.mw[,5]), "sum")[,-c(1:2)])
-
 # R1. Sales Outcome
 res.so.br.d <- list(Product.ratio   = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(4, 22, 2)]/rowSums(df.br.so.dw[seq(4, 22, 2)])),
                     Product.premium = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(4, 22, 2)]),
@@ -483,8 +473,8 @@ res.sa.br.pg.mw <- aggregate(df.br.sa.mw[,-c(1:2)], list(df.br.sa.mw[,1], res.br
 # write.csv(df.br.sa.mw, file = "res.sa.br.m.csv"); write.csv(res.sa.br.pg.mw, file = "br.peer.group.m.csv")
 
 
-
 # R3. FP comparison
+br.id         <- 7003
 fp.id.all     <- unique(res.all.fp[res.all.fp[,3] == br.id, 4])
 res.grade.all <- data.frame(FP.id = rep(fp.id.all, each = 3),
                             Stage = rep(1:3, length(fp.id.all)),
@@ -505,6 +495,7 @@ names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.fp[,1])
 res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
 res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
 res.grade.m[order(res.grade.m[,1]),]
+
 
 
 #########################################################################################################################
@@ -702,6 +693,112 @@ for(m in nm.m){
 }
 
 write.csv(res.all.br, file = "res.br.csv")
+
+
+
+
+#########################################################################################################################
+### Business_UI: Business unit evaluation
+#########################################################################################################################
+
+# Aggregation per Business Unit
+df.bu.so.dw <- aggregate(df.eff.dw[,c(36:55, id.so.kpi.d)], list(df.eff.dw[,1], df.eff.dw[,3]), "sum")
+df.bu.so.mw <- aggregate(cbind(df.eff.mw[,id.so.kpi.m], df.eff.mw[,68:69] * df.eff.mw[,45]), list(df.eff.mw[,1], df.eff.mw[,4]), "sum")
+df.bu.sa.dw <- aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,3]), "sum")
+df.bu.sa.mw <- aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,4]), "sum")
+
+# R1. Sales Outcome
+res.so.bu.d <- list(Product.ratio   = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(4, 22, 2)]/rowSums(df.bu.so.dw[seq(4, 22, 2)])),
+                    Product.premium = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(4, 22, 2)]),
+                    Product.count   = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(3, 21, 2)]),
+                    KPI             = cbind(df.bu.so.dw[1:2], data.frame(Premium.total       = df.bu.so.dw[37],
+                                                                         Premium.p.total     = df.bu.so.dw[37]/df.bu.so.dw[36],
+                                                                         Premium.cvt.total   = df.bu.so.dw[40],
+                                                                         Count               = df.bu.so.dw[36],
+                                                                         Contract.p.design   = df.bu.so.dw[36]/df.bu.so.dw[28]*100,
+                                                                         Contract.v.online   = df.bu.so.dw[38],
+                                                                         Cancel.return       = df.bu.so.dw[34],
+                                                                         # Age.contractor    = df.br.agg.dw[28]/df.br.agg.dw[4],
+                                                                         # Age.insurant      = df.br.agg.dw[29]/df.br.agg.dw[4],
+                                                                         Contract.p.design   = df.bu.so.dw[36]/df.bu.so.dw[29]*100,
+                                                                         Premium.cvt.p.total = df.bu.so.dw[40]/df.bu.so.dw[36])))
+
+# write.csv(cbind(res.so.bu.d$Product.ratio, res.so.bu.d$Product.premium[,-c(1:2)], res.so.bu.d$Product.count[,-c(1:2)], res.so.bu.d$KPI[,-c(1:2)]), file = "res.so.bu.d.csv")
+
+res.so.bu.m <- list(Product.ratio   = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(13, 31, 2)]/rowSums(df.bu.so.mw[seq(13, 31, 2)])),
+                    Product.premium = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(13, 31, 2)]),
+                    Product.count   = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(12, 30, 2)]),
+                    KPI             = cbind(df.bu.so.mw[1:2], data.frame(Premium.total       = df.bu.so.mw[8],
+                                                                         Premium.p.total     = df.bu.so.mw[8]/df.bu.so.mw[7],
+                                                                         Premium.cvt.total   = df.bu.so.mw[9],
+                                                                         Count               = df.bu.so.mw[7],
+                                                                         Contract.p.design   = df.bu.so.mw[7]/df.bu.so.mw[3]*100,
+                                                                         Age.contractor      = df.bu.so.mw[32]/df.bu.so.mw[7],
+                                                                         Age.insurant        = df.bu.so.mw[33]/df.bu.so.mw[7],
+                                                                         Contract.p.design   = df.bu.so.mw[7]/df.bu.so.mw[4]*100,
+                                                                         Premium.cvt.p.total = df.bu.so.mw[9]/df.bu.so.mw[7])))
+
+# write.csv(cbind(res.so.bu.m$Product.ratio, res.so.bu.m$Product.premium[,-c(1:2)], res.so.bu.m$Product.count[,-c(1:2)], res.so.bu.m$KPI[,-c(1:2)]), file = "res.so.bu.m.csv")
+
+res.so.bu.m.six <- data.frame()
+for(m in nm.m[nm.m < m.now]){
+  id.o.i  <- df.eff.mw[,1] %in% tail(nm.m[nm.m <= m], 6)
+  df.o.i  <- cbind(df.eff.mw[id.o.i, c(1:2, 4, id.so.kpi.m)], df.eff.mw[id.o.i, 68:69] * df.eff.mw[id.o.i, 45])
+  df.agg  <- aggregate(df.o.i[,-c(1:3)], list(df.o.i[,3]), "sum")
+  res.agg <- data.frame(Eval.m    = m + 1, 
+                        BR.id     = df.agg[1], 
+                        P.ratio   = df.agg[seq(12, 30, 2)]/rowSums(df.agg[seq(12, 30, 2)]),
+                        P.amount  = df.agg[seq(12, 30, 2)], 
+                        P.count   = df.agg[seq(11, 29, 2)], df.agg[,6:8], 
+                        C.avg     = df.agg[6]/length(tail(nm.m[nm.m <= m], 6)),
+                        MP.p.c    = df.agg[7]/df.agg[6],
+                        C.p.d     = df.agg[6]/df.agg[2]*100, 
+                        C.p.i     = df.agg[6]/df.agg[3]*100, 
+                        Age.c     = df.agg[31]/df.agg[6],
+                        Age.i     = df.agg[32]/df.agg[6],
+                        P.cvt.p.c = df.agg[8]/df.agg[6])
+  res.so.bu.m.six <- rbind(res.so.bu.m.six, res.agg)
+  
+}
+
+# write.csv(res.so.bu.m.six, file = "res.so.bu.six.m.csv")
+
+
+# P2. Sales Activity
+df.bu.sa.dw[,2] <- as.numeric(df.bu.sa.dw[,2])
+res.sa.bu.pg.dw <- aggregate(df.bu.sa.dw[,-c(1:2)], list(df.bu.sa.dw[,1]), "mean")
+
+# write.csv(df.bu.sa.dw, file = "res.sa.bu.d.csv"); write.csv(res.sa.bu.pg.dw, file = "bu.peer.group.d.csv")
+
+res.sa.bu.pg.mw <- aggregate(df.bu.sa.mw[,-c(1:2)], list(df.bu.sa.mw[,1]), "mean")
+
+# write.csv(df.bu.sa.mw, file = "res.sa.bu.m.csv"); write.csv(res.sa.bu.pg.mw, file = "bu.peer.group.m.csv")
+
+
+# R3. FP comparison
+# br.id         <- 7003
+# fp.id.all     <- unique(res.all.fp[res.all.fp[,3] == br.id, 4])
+# res.grade.all <- data.frame(FP.id = rep(fp.id.all, each = 3),
+#                             Stage = rep(1:3, length(fp.id.all)),
+#                             Process = rep(c("New.contract.closing", "Profitability", "Contract.mgt"), length(fp.id.all)))
+# for(i in unique(res.all.fp[,1])){
+#   grade   <- matrix(NA, nrow = length(fp.id.all) * 3)
+#   df.temp <- res.all.fp[res.all.fp[,1] == i & res.all.fp[,3] == br.id,]
+#   for(k in fp.id.all){
+#     if(k %in% df.temp[,4]){
+#       grade[((which(k == fp.id.all) - 1)*3 + 1):((which(k == fp.id.all) - 1)*3 + 3),] <- unlist(df.temp[df.temp[,4] == k, c(7, 10, 13)])
+#     }else{
+#       next
+#     }
+#   }
+#   res.grade.all <- cbind(res.grade.all, grade)
+# }
+# names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.fp[,1])
+# res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
+# res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
+# res.grade.m[order(res.grade.m[,1]),]
+
+
 
 
 #########################################################################################################################
