@@ -9,11 +9,45 @@
 #########################################################################################################################
 
 # Load library
-pkgs <- c("DJL", "abind")
+pkgs <- c("DJL", "RMySQL", "DBI")
 sapply(pkgs, require, character.only = T)
+
+# DB connect
+testDB <- dbConnect(
+  MySQL(),
+  user = 'contv',
+  password = 'contv1234',
+  host = '34.64.123.154',
+  dbname = 'Vinfo'
+)
+dbSendQuery(testDB, 'set character set "utf8"')
 
 # Load data & parameters
 load("DBFP.2011.2110.Rdata")
+
+# Send to mariaDB
+FP_M        <- df.raw.2011.2110
+FP_D        <- df.raw.211001.211108
+names(FP_M) <- c('close_acc','fp_nb','bs_grade','ent_org','branch','branch_inq','branch_size','sort_1','fp_exp','sort_2',
+                 'sort_3','sort_4','sort_5','sort_6','client_nb','client_ea','plan_stg','plan_nonstg','print_ea','plan_ea',
+                 'tapp_ea','app_totnb','app_plan','app_tplan','appsd_ea','appsd_act','appsd_cnt','appsd_stg','appsd_nonstg',
+                 'sub_rate1','sub_rate2','sub_rate4','re_ea','re_rate','wd_ea','wd_rate','etopia_con','etopia_rate',
+                 'esub_totnb','esub_mobile','esub_tablet','esubrate_totnb','esubrate_mobile','esubrate_tablet','cont_ea',
+                 'cont_stg','cont_nonstg','family_ea','family_cvp','cont_bgp','cont_bgpstg','cont_bgpnonstg','cont_bgpmt',
+                 'retain_nb','rec_nb1','rec_nb2','overdue_nb','eave_nb','keep_rate','keep_ea','profit_ratio','cont_value',
+                 'cont_p','app_bgp','appsd_bgp','wd_bgp','cont_vcp','age_avg','ins_avg','save_ea','save_amt','etc_ea',
+                 'etc_amt','reg_ea','reg_amt','health_ea','health_amt','pen_ea','pen_amt','whole_ea','whole_amt',
+                 'canwhole_ea','canwhole_amt','accident_ea','accident_amt','child_ea','child_amt','cancer_ea',
+                 'cancer_amt','etopia_ea','gen_ea','opt_ea')
+names(FP_D) <- c('CLSE_DAY','FP','PSIF_BR_HQ','PSIF_BR_HQ_NM','PSIF_BR_BRNO','PSIF_BR_BRNM','PSIF_SLS_TTL','PSIF_DLGT_PAST_RND',
+                 'NEW_YN','PSIF_DLGT_PAST_RNDC','NO_ACH_YN','ATV_YN','SDZ_YN','ELTM_YN','ETP_CT_DAY_CNT','ETP_CT_RT',
+                 'ETP_CT_CNT','ETP_CT_CNT_DA','PROB_CUS_REG_CNT','OTM_GRT_ANLS_CNT','GEN_GRT_ANLS_CNT','ISD_DGN_CNT',
+                 'SBSC_ISS_CNT','SBSC_ISS_MTP','CTR_SND_CNT','CTR_SND_MTP','CTR_RT1','CTR_RT4','CTWD_RJCT_CNT','CTWD_RJCT_MTP',
+                 'NAG_CNT','NAG_MTP','CTR_ELCT_CNT','CTR_RT_CNT','OMT_GEN','SAV_CNT','SAV_AMT','OT_CNT','OT_AMT','FXPD_CNT',
+                 'FXPD_AMT','HLTH_CNT','HLTH_AMT','PSN_CNT','PSN_AMT','WHOL_CNT','WHOL_AMT','CNCR_WHOL_CNT','CNCR_WHOL_AMT',
+                 'IJRY_CNT','IJRY_AMT','CHLD_CNT','CHLD_AMT','CNCR_CNT','CNCR_AMT','INQ','BR_S')
+dbWriteTable(testDB, "FP_M", FP_M, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "FP_D", FP_D, row.names = F, append = F, overwrite = T)
 
 # Naming and sorting for coding convenience
 df.raw.mw <- df.raw.2011.2110
@@ -305,17 +339,21 @@ for(m in nm.m){
                                                Target.sup = res.tar.sup))
     }
   }
-  # write.csv(res.all.m[order(res.all.m[,2]),], file = "benchmark.csv")
   res.all.fp <- rbind(res.all.fp, res.all.m[order(res.all.m[,2], res.all.m[,3], res.all.m[,4]),])
 }
 # write.csv(res.all.fp[complete.cases(res.all.fp),], file = "res.all.fp.csv")
+
+# Send to mariaDB
+RES_ALL_FP        <- res.all.fp[complete.cases(res.all.fp),]
+names(RES_ALL_FP) <- paste0("V", 1:ncol(RES_ALL_FP))
+dbWriteTable(testDB, "RES_ALL_FP", RES_ALL_FP, row.names = F, append = F, overwrite = T)
 
 
 #########################################################################################################################
 ### FP_UI: FP evaluation
 #########################################################################################################################
 
-# P1. Sales Outcome
+############################################### P1. Sales Outcome - Daily ###############################################
 res.so.fp.d <- list(Product.ratio   = cbind(df.eff.dw[1:2], df.eff.dw[seq(37, 55, 2)]/rowSums(df.eff.dw[seq(37, 55, 2)])),
                     Product.premium = cbind(df.eff.dw[1:2], df.eff.dw[seq(37, 55, 2)]),
                     Product.count   = cbind(df.eff.dw[1:2], df.eff.dw[seq(36, 54, 2)]),
@@ -333,6 +371,13 @@ res.so.fp.d <- list(Product.ratio   = cbind(df.eff.dw[1:2], df.eff.dw[seq(37, 55
 
 # write.csv(cbind(res.so.fp.d$Product.ratio, res.so.fp.d$Product.premium[,-c(1:2)], res.so.fp.d$Product.count[,-c(1:2)], res.so.fp.d$KPI[,-c(1:2)]), file = "res.so.fp.d.csv")
 
+# Send to mariaDB
+RES_SO_FP_D        <- cbind(res.so.fp.d$Product.ratio, res.so.fp.d$Product.premium[,-c(1:2)], res.so.fp.d$Product.count[,-c(1:2)], res.so.fp.d$KPI[,-c(1:2)])
+names(RES_SO_FP_D) <- paste0("V", 1:ncol(RES_SO_FP_D))
+dbWriteTable(testDB, "RES_SO_FP_D", RES_SO_FP_D, row.names = F, append = F, overwrite = T)
+
+
+############################################### P1. Sales Outcome - Monthly ###############################################
 res.so.fp.m <- list(Product.ratio   = cbind(df.eff.mw[1:2], df.eff.mw[seq(71, 89, 2)]/rowSums(df.eff.mw[seq(71, 89, 2)])),
                     Product.premium = cbind(df.eff.mw[1:2], df.eff.mw[seq(71, 89, 2)]),
                     Product.count   = cbind(df.eff.mw[1:2], df.eff.mw[seq(70, 88, 2)]),
@@ -348,6 +393,13 @@ res.so.fp.m <- list(Product.ratio   = cbind(df.eff.mw[1:2], df.eff.mw[seq(71, 89
 
 # write.csv(cbind(res.so.fp.m$Product.ratio, res.so.fp.m$Product.premium[,-c(1:2)], res.so.fp.m$Product.count[,-c(1:2)], res.so.fp.m$KPI[,-c(1:2)]), file = "res.so.fp.m.csv")
 
+# Send to mariaDB
+RES_SO_FP_M        <- cbind(res.so.fp.m$Product.ratio, res.so.fp.m$Product.premium[,-c(1:2)], res.so.fp.m$Product.count[,-c(1:2)], res.so.fp.m$KPI[,-c(1:2)])
+names(RES_SO_FP_M) <- paste0("V", 1:ncol(RES_SO_FP_M))
+dbWriteTable(testDB, "RES_SO_FP_M", RES_SO_FP_M, row.names = F, append = F, overwrite = T)
+
+
+##################################### P1. Sales Outcome - Aggregate of past 6-months #####################################
 res.so.fp.m.six <- data.frame()
 for(m in nm.m[nm.m < m.now]){
   id.o.i <- df.eff.mw[,1] %in% tail(nm.m[nm.m <= m], 6)
@@ -370,8 +422,13 @@ for(m in nm.m[nm.m < m.now]){
 
 # write.csv(res.so.fp.m.six, file = "res.so.fp.six.m.csv")
 
+# Send to mariaDB
+RES_SO_FP_SIX_M        <- res.so.fp.m.six
+names(RES_SO_FP_SIX_M) <- paste0("V", 1:ncol(RES_SO_FP_SIX_M))
+dbWriteTable(testDB, "RES_SO_FP_SIX_M", RES_SO_FP_SIX_M, row.names = F, append = F, overwrite = T)
 
-# P2. Sales Activity
+
+############################################### P2. Sales Activity - Daily ###############################################
 res.sa.fp.d <- list(Each.FP    = df.eff.dw[order(df.eff.dw[,2], df.eff.dw[,1]), c(1, 2, id.sa.kpi.d, 56)],
                     Peer.Group = aggregate(df.eff.dw[,c(id.sa.kpi.d, 56)], list(df.eff.dw[,1], df.eff.dw[,9], df.eff.dw[,10]), "mean"),
                     Stdd.Group = aggregate(df.eff.dw[,c(id.sa.kpi.d, 56)], list(df.eff.dw[,1], df.eff.dw[,9], df.eff.dw[,10], df.eff.dw[,13]), "mean"),
@@ -379,12 +436,36 @@ res.sa.fp.d <- list(Each.FP    = df.eff.dw[order(df.eff.dw[,2], df.eff.dw[,1]), 
 
 # write.csv(res.sa.fp.d$Peer.Group, file = "fp.peer.group.d.csv"); write.csv(res.sa.fp.d$Stdd.Group, file = "fp.stdd.group.d.csv"); write.csv(res.sa.fp.d$Crck.Group, file = "fp.crck.group.d.csv")
 
+# Send to mariaDB
+FP_PEER_GROUP_D        <- res.sa.fp.d$Peer.Group
+FP_STDD_GROUP_D        <- res.sa.fp.d$Stdd.Group
+FP_CRCK_GROUP_D        <- res.sa.fp.d$Crck.Group
+names(FP_PEER_GROUP_D) <- paste0("V", 1:ncol(FP_PEER_GROUP_D))
+names(FP_STDD_GROUP_D) <- paste0("V", 1:ncol(FP_STDD_GROUP_D))
+names(FP_CRCK_GROUP_D) <- paste0("V", 1:ncol(FP_CRCK_GROUP_D))
+dbWriteTable(testDB, "FP_PEER_GROUP_D", FP_PEER_GROUP_D, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "FP_STDD_GROUP_D", FP_STDD_GROUP_D, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "FP_CRCK_GROUP_D", FP_CRCK_GROUP_D, row.names = F, append = F, overwrite = T)
+
+
+############################################## P2. Sales Activity - Monthly ##############################################
 res.sa.fp.m <- list(Each.FP    = df.eff.mw[,c(1, 2, id.sa.kpi.m)],
                     Peer.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10]), "mean"),
                     Stdd.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,13]), "mean"),
                     Crck.Group = aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,8], df.eff.mw[,10], df.eff.mw[,14]), "mean"))
 
 # write.csv(res.sa.fp.m$Peer.Group, file = "fp.peer.group.m.csv"); write.csv(res.sa.fp.m$Stdd.Group, file = "fp.stdd.group.m.csv"); write.csv(res.sa.fp.m$Crck.Group, file = "fp.crck.group.m.csv")
+
+# Send to mariaDB
+FP_PEER_GROUP_M        <- res.sa.fp.m$Peer.Group
+FP_STDD_GROUP_M        <- res.sa.fp.m$Stdd.Group
+FP_CRCK_GROUP_M        <- res.sa.fp.m$Crck.Group
+names(FP_PEER_GROUP_M) <- paste0("V", 1:ncol(FP_PEER_GROUP_M))
+names(FP_STDD_GROUP_M) <- paste0("V", 1:ncol(FP_STDD_GROUP_M))
+names(FP_CRCK_GROUP_M) <- paste0("V", 1:ncol(FP_CRCK_GROUP_M))
+dbWriteTable(testDB, "FP_PEER_GROUP_M", FP_PEER_GROUP_M, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "FP_STDD_GROUP_M", FP_STDD_GROUP_M, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "FP_CRCK_GROUP_M", FP_CRCK_GROUP_M, row.names = F, append = F, overwrite = T)
 
 
 # R3. Benchmark
@@ -401,7 +482,7 @@ df.br.so.mw <- aggregate(cbind(df.eff.mw[,id.so.kpi.m], df.eff.mw[,68:69] * df.e
 df.br.sa.dw <- aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,5]), "sum")
 df.br.sa.mw <- aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,5]), "sum")
 
-# R1. Sales Outcome
+############################################## R1. Sales Outcome - Dailty ##############################################
 res.so.br.d <- list(Product.ratio   = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(4, 22, 2)]/rowSums(df.br.so.dw[seq(4, 22, 2)])),
                     Product.premium = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(4, 22, 2)]),
                     Product.count   = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(3, 21, 2)]),
@@ -419,6 +500,13 @@ res.so.br.d <- list(Product.ratio   = cbind(df.br.so.dw[1:2], df.br.so.dw[seq(4,
 
 # write.csv(cbind(res.so.br.d$Product.ratio, res.so.br.d$Product.premium[,-c(1:2)], res.so.br.d$Product.count[,-c(1:2)], res.so.br.d$KPI[,-c(1:2)]), file = "res.so.br.d.csv")
 
+# Send to mariaDB
+RES_SO_BR_D        <- cbind(res.so.br.d$Product.ratio, res.so.br.d$Product.premium[,-c(1:2)], res.so.br.d$Product.count[,-c(1:2)], res.so.br.d$KPI[,-c(1:2)])
+names(RES_SO_BR_D) <- paste0("V", 1:ncol(RES_SO_BR_D))
+dbWriteTable(testDB, "RES_SO_BR_D", RES_SO_BR_D, row.names = F, append = F, overwrite = T)
+
+
+############################################## R1. Sales Outcome - Monthly ##############################################
 res.so.br.m <- list(Product.ratio   = cbind(df.br.so.mw[1:2], df.br.so.mw[seq(13, 31, 2)]/rowSums(df.br.so.mw[seq(13, 31, 2)])),
                     Product.premium = cbind(df.br.so.mw[1:2], df.br.so.mw[seq(13, 31, 2)]),
                     Product.count   = cbind(df.br.so.mw[1:2], df.br.so.mw[seq(12, 30, 2)]),
@@ -434,6 +522,13 @@ res.so.br.m <- list(Product.ratio   = cbind(df.br.so.mw[1:2], df.br.so.mw[seq(13
 
 # write.csv(cbind(res.so.br.m$Product.ratio, res.so.br.m$Product.premium[,-c(1:2)], res.so.br.m$Product.count[,-c(1:2)], res.so.br.m$KPI[,-c(1:2)]), file = "res.so.br.m.csv")
 
+# Send to mariaDB
+RES_SO_BR_M        <- cbind(res.so.br.m$Product.ratio, res.so.br.m$Product.premium[,-c(1:2)], res.so.br.m$Product.count[,-c(1:2)], res.so.br.m$KPI[,-c(1:2)])
+names(RES_SO_BR_M) <- paste0("V", 1:ncol(RES_SO_BR_M))
+dbWriteTable(testDB, "RES_SO_BR_M", RES_SO_BR_M, row.names = F, append = F, overwrite = T)
+
+
+##################################### P1. Sales Outcome - Aggregate of past 6-months #####################################
 res.so.br.m.six <- data.frame()
 for(m in nm.m[nm.m < m.now]){
   id.o.i  <- df.eff.mw[,1] %in% tail(nm.m[nm.m <= m], 6)
@@ -457,8 +552,13 @@ for(m in nm.m[nm.m < m.now]){
 
 # write.csv(res.so.br.m.six, file = "res.so.br.six.m.csv")
 
+# Send to mariaDB
+RES_SO_BR_SIX_M        <- res.so.br.m.six
+names(RES_SO_BR_SIX_M) <- paste0("V", 1:ncol(RES_SO_BR_SIX_M))
+dbWriteTable(testDB, "RES_SO_BR_SIX_M", RES_SO_BR_SIX_M, row.names = F, append = F, overwrite = T)
 
-# P2. Sales Activity
+
+############################################### P2. Sales Activity - Daily ###############################################
 df.br.sa.dw[,2] <- as.numeric(df.br.sa.dw[,2])
 res.br.sa.pg.dw <- data.frame()
 for(i in 1:nrow(df.br.sa.dw)){res.br.sa.pg.dw <- rbind(res.br.sa.pg.dw, df.eff.mw[df.eff.mw[,1] == (m.now - 1) & df.eff.mw[,5] == df.br.sa.dw[i, 2], 6:7][1,])}
@@ -466,35 +566,53 @@ res.sa.br.pg.dw <- aggregate(df.br.sa.dw[,-c(1:2)], list(df.br.sa.dw[,1], res.br
 
 # write.csv(df.br.sa.dw, file = "res.sa.br.d.csv"); write.csv(res.sa.br.pg.dw, file = "br.peer.group.d.csv")
 
+# Send to mariaDB
+RES_SA_BR_D            <- df.br.sa.dw
+BR_PEER_GROUP_D        <- res.sa.br.pg.dw
+names(RES_SA_BR_D)     <- paste0("V", 1:ncol(RES_SA_BR_D))
+names(BR_PEER_GROUP_D) <- paste0("V", 1:ncol(BR_PEER_GROUP_D))
+dbWriteTable(testDB, "RES_SA_BR_D", RES_SA_BR_D, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "BR_PEER_GROUP_D", BR_PEER_GROUP_D, row.names = F, append = F, overwrite = T)
+
+
+############################################### P2. Sales Activity - Monthly ###############################################
 res.br.sa.pg.mw <- data.frame()
 for(i in 1:nrow(df.br.sa.mw)){res.br.sa.pg.mw <- rbind(res.br.sa.pg.mw, df.eff.mw[df.eff.mw[,1] == df.br.sa.mw[i, 1] & df.eff.mw[,5] == df.br.sa.mw[i, 2], 6:7][1,])}
 res.sa.br.pg.mw <- aggregate(df.br.sa.mw[,-c(1:2)], list(df.br.sa.mw[,1], res.br.sa.pg.mw[,1], res.br.sa.pg.mw[,2]), "mean")
 
 # write.csv(df.br.sa.mw, file = "res.sa.br.m.csv"); write.csv(res.sa.br.pg.mw, file = "br.peer.group.m.csv")
 
+# Send to mariaDB
+RES_SA_BR_M            <- df.br.sa.mw
+BR_PEER_GROUP_M        <- res.sa.br.pg.mw
+names(RES_SA_BR_M)     <- paste0("V", 1:ncol(RES_SA_BR_M))
+names(BR_PEER_GROUP_M) <- paste0("V", 1:ncol(BR_PEER_GROUP_M))
+dbWriteTable(testDB, "RES_SA_BR_M", RES_SA_BR_M, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "BR_PEER_GROUP_M", BR_PEER_GROUP_M, row.names = F, append = F, overwrite = T)
+
 
 # R3. FP comparison
-br.id         <- 7003
-fp.id.all     <- unique(res.all.fp[res.all.fp[,3] == br.id, 4])
-res.grade.all <- data.frame(FP.id = rep(fp.id.all, each = 3),
-                            Stage = rep(1:3, length(fp.id.all)),
-                            Process = rep(c("New.contract.closing", "Profitability", "Contract.mgt"), length(fp.id.all)))
-for(i in unique(res.all.fp[,1])){
-  grade   <- matrix(NA, nrow = length(fp.id.all) * 3)
-  df.temp <- res.all.fp[res.all.fp[,1] == i & res.all.fp[,3] == br.id,]
-  for(k in fp.id.all){
-    if(k %in% df.temp[,4]){
-      grade[((which(k == fp.id.all) - 1)*3 + 1):((which(k == fp.id.all) - 1)*3 + 3),] <- unlist(df.temp[df.temp[,4] == k, c(7, 10, 13)])
-    }else{
-      next
-    }
-  }
-  res.grade.all <- cbind(res.grade.all, grade)
-}
-names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.fp[,1])
-res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
-res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
-res.grade.m[order(res.grade.m[,1]),]
+# br.id         <- 7003
+# fp.id.all     <- unique(res.all.fp[res.all.fp[,3] == br.id, 4])
+# res.grade.all <- data.frame(FP.id = rep(fp.id.all, each = 3),
+#                             Stage = rep(1:3, length(fp.id.all)),
+#                             Process = rep(c("New.contract.closing", "Profitability", "Contract.mgt"), length(fp.id.all)))
+# for(i in unique(res.all.fp[,1])){
+#   grade   <- matrix(NA, nrow = length(fp.id.all) * 3)
+#   df.temp <- res.all.fp[res.all.fp[,1] == i & res.all.fp[,3] == br.id,]
+#   for(k in fp.id.all){
+#     if(k %in% df.temp[,4]){
+#       grade[((which(k == fp.id.all) - 1)*3 + 1):((which(k == fp.id.all) - 1)*3 + 3),] <- unlist(df.temp[df.temp[,4] == k, c(7, 10, 13)])
+#     }else{
+#       next
+#     }
+#   }
+#   res.grade.all <- cbind(res.grade.all, grade)
+# }
+# names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.fp[,1])
+# res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
+# res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
+# res.grade.m[order(res.grade.m[,1]),]
 
 
 
@@ -734,6 +852,10 @@ for(m in nm.m){
 }
 # write.csv(res.all.br[complete.cases(res.all.br),], file = "res.all.br.csv")
 
+# Send to mariaDB
+RES_ALL_BR        <- res.all.br[complete.cases(res.all.br),]
+names(RES_ALL_BR) <- paste0("V", 1:ncol(RES_ALL_BR))
+dbWriteTable(testDB, "RES_ALL_BR", RES_ALL_BR, row.names = F, append = F, overwrite = T)
 
 
 #########################################################################################################################
@@ -746,7 +868,7 @@ df.bu.so.mw <- aggregate(cbind(df.eff.mw[,id.so.kpi.m], df.eff.mw[,68:69] * df.e
 df.bu.sa.dw <- aggregate(df.eff.dw[,id.sa.kpi.d], list(df.eff.dw[,1], df.eff.dw[,3]), "sum")
 df.bu.sa.mw <- aggregate(df.eff.mw[,id.sa.kpi.m], list(df.eff.mw[,1], df.eff.mw[,4]), "sum")
 
-# R1. Sales Outcome
+############################################## R1. Sales Outcome - Dailty ##############################################
 res.so.bu.d <- list(Product.ratio   = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(4, 22, 2)]/rowSums(df.bu.so.dw[seq(4, 22, 2)])),
                     Product.premium = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(4, 22, 2)]),
                     Product.count   = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(3, 21, 2)]),
@@ -764,6 +886,13 @@ res.so.bu.d <- list(Product.ratio   = cbind(df.bu.so.dw[1:2], df.bu.so.dw[seq(4,
 
 # write.csv(cbind(res.so.bu.d$Product.ratio, res.so.bu.d$Product.premium[,-c(1:2)], res.so.bu.d$Product.count[,-c(1:2)], res.so.bu.d$KPI[,-c(1:2)]), file = "res.so.bu.d.csv")
 
+# Send to mariaDB
+RES_SO_BU_D        <- cbind(res.so.bu.d$Product.ratio, res.so.bu.d$Product.premium[,-c(1:2)], res.so.bu.d$Product.count[,-c(1:2)], res.so.bu.d$KPI[,-c(1:2)])
+names(RES_SO_BU_D) <- paste0("V", 1:ncol(RES_SO_BU_D))
+dbWriteTable(testDB, "RES_SO_BU_D", RES_SO_BU_D, row.names = F, append = F, overwrite = T)
+
+
+############################################## R1. Sales Outcome - Monthly ##############################################
 res.so.bu.m <- list(Product.ratio   = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(13, 31, 2)]/rowSums(df.bu.so.mw[seq(13, 31, 2)])),
                     Product.premium = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(13, 31, 2)]),
                     Product.count   = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(12, 30, 2)]),
@@ -779,6 +908,13 @@ res.so.bu.m <- list(Product.ratio   = cbind(df.bu.so.mw[1:2], df.bu.so.mw[seq(13
 
 # write.csv(cbind(res.so.bu.m$Product.ratio, res.so.bu.m$Product.premium[,-c(1:2)], res.so.bu.m$Product.count[,-c(1:2)], res.so.bu.m$KPI[,-c(1:2)]), file = "res.so.bu.m.csv")
 
+# Send to mariaDB
+RES_SO_BU_M        <- cbind(res.so.bu.m$Product.ratio, res.so.bu.m$Product.premium[,-c(1:2)], res.so.bu.m$Product.count[,-c(1:2)], res.so.bu.m$KPI[,-c(1:2)])
+names(RES_SO_BU_M) <- paste0("V", 1:ncol(RES_SO_BU_M))
+dbWriteTable(testDB, "RES_SO_BU_M", RES_SO_BU_M, row.names = F, append = F, overwrite = T)
+
+
+##################################### P1. Sales Outcome - Aggregate of past 6-months #####################################
 res.so.bu.m.six <- data.frame()
 for(m in nm.m[nm.m < m.now]){
   id.o.i  <- df.eff.mw[,1] %in% tail(nm.m[nm.m <= m], 6)
@@ -802,40 +938,63 @@ for(m in nm.m[nm.m < m.now]){
 
 # write.csv(res.so.bu.m.six, file = "res.so.bu.six.m.csv")
 
+# Send to mariaDB
+RES_SO_BU_SIX_M        <- res.so.bu.m.six
+names(RES_SO_BU_SIX_M) <- paste0("V", 1:ncol(RES_SO_BU_SIX_M))
+dbWriteTable(testDB, "RES_SO_BU_SIX_M", RES_SO_BU_SIX_M, row.names = F, append = F, overwrite = T)
 
-# P2. Sales Activity
+
+############################################### P2. Sales Activity - Daily ###############################################
 df.bu.sa.dw[,2] <- as.numeric(df.bu.sa.dw[,2])
 res.sa.bu.pg.dw <- aggregate(df.bu.sa.dw[,-c(1:2)], list(df.bu.sa.dw[,1]), "mean")
 
 # write.csv(df.bu.sa.dw, file = "res.sa.bu.d.csv"); write.csv(res.sa.bu.pg.dw, file = "bu.peer.group.d.csv")
 
+# Send to mariaDB
+RES_SA_BU_D            <- df.bu.sa.dw
+BU_PEER_GROUP_D        <- res.sa.bu.pg.dw
+names(RES_SA_BU_D)     <- paste0("V", 1:ncol(RES_SA_BU_D))
+names(BU_PEER_GROUP_D) <- paste0("V", 1:ncol(BU_PEER_GROUP_D))
+dbWriteTable(testDB, "RES_SA_BU_D", RES_SA_BU_D, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "BU_PEER_GROUP_D", BU_PEER_GROUP_D, row.names = F, append = F, overwrite = T)
+
+
+############################################### P2. Sales Activity - Monthly ###############################################
 res.sa.bu.pg.mw <- aggregate(df.bu.sa.mw[,-c(1:2)], list(df.bu.sa.mw[,1]), "mean")
 
 # write.csv(df.bu.sa.mw, file = "res.sa.bu.m.csv"); write.csv(res.sa.bu.pg.mw, file = "bu.peer.group.m.csv")
 
+# Send to mariaDB
+RES_SA_BU_M            <- df.bu.sa.mw
+BU_PEER_GROUP_M        <- res.sa.bu.pg.mw
+names(RES_SA_BU_M)     <- paste0("V", 1:ncol(RES_SA_BU_M))
+names(BU_PEER_GROUP_M) <- paste0("V", 1:ncol(BU_PEER_GROUP_M))
+dbWriteTable(testDB, "RES_SA_BU_M", RES_SA_BU_M, row.names = F, append = F, overwrite = T)
+dbWriteTable(testDB, "BU_PEER_GROUP_M", BU_PEER_GROUP_M, row.names = F, append = F, overwrite = T)
+
 
 # R3. BR comparison
-bu.id         <- 73
-br.id.all     <- unique(res.all.br[res.all.br[,2] == bu.id, 3])
-res.grade.all <- data.frame(BR.id = rep(br.id.all, each = 3),
-                            Stage = rep(1:3, length(br.id.all)),
-                            Process = rep(c("New.contract.closing", "Profitability", "Contract.mgt"), length(br.id.all)))
-for(i in unique(res.all.br[,1])){
-  grade   <- matrix(NA, nrow = length(br.id.all) * 3)
-  df.temp <- res.all.br[res.all.br[,1] == i & res.all.br[,2] == bu.id,]
-  for(k in br.id.all){
-    if(k %in% df.temp[,3]){
-      grade[((which(k == br.id.all) - 1)*3 + 1):((which(k == br.id.all) - 1)*3 + 3),] <- unlist(df.temp[df.temp[,3] == k, c(7, 10, 13)])
-    }else{
-      next
-    }
-  }
-  res.grade.all <- cbind(res.grade.all, grade)
-}
-names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.br[,1])
-res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
-res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
-res.grade.m[order(res.grade.m[,1]),]
+# bu.id         <- 73
+# br.id.all     <- unique(res.all.br[res.all.br[,2] == bu.id, 3])
+# res.grade.all <- data.frame(BR.id = rep(br.id.all, each = 3),
+#                             Stage = rep(1:3, length(br.id.all)),
+#                             Process = rep(c("New.contract.closing", "Profitability", "Contract.mgt"), length(br.id.all)))
+# for(i in unique(res.all.br[,1])){
+#   grade   <- matrix(NA, nrow = length(br.id.all) * 3)
+#   df.temp <- res.all.br[res.all.br[,1] == i & res.all.br[,2] == bu.id,]
+#   for(k in br.id.all){
+#     if(k %in% df.temp[,3]){
+#       grade[((which(k == br.id.all) - 1)*3 + 1):((which(k == br.id.all) - 1)*3 + 3),] <- unlist(df.temp[df.temp[,3] == k, c(7, 10, 13)])
+#     }else{
+#       next
+#     }
+#   }
+#   res.grade.all <- cbind(res.grade.all, grade)
+# }
+# names(res.grade.all)[4:ncol(res.grade.all)] <- unique(res.all.br[,1])
+# res.grade.m <- cbind(res.grade.all[,1:3], res.grade.all[,match(tail(nm.m[nm.m <= m], 6), names(res.grade.all))])
+# res.grade.m <- res.grade.m[apply(res.grade.m[,-c(1:3)], 1, function(x) sum(is.na(x)) != ncol(res.grade.m[,-c(1:3)])),]
+# res.grade.m[order(res.grade.m[,1]),]
 
 
 
