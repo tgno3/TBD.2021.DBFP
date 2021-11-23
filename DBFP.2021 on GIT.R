@@ -45,7 +45,7 @@ names(FP_D) <- c('CLSE_DAY','FP','PSIF_BR_HQ','PSIF_BR_HQ_NM','PSIF_BR_BRNO','PS
                  'SBSC_ISS_CNT','SBSC_ISS_MTP','CTR_SND_CNT','CTR_SND_MTP','CTR_RT1','CTR_RT4','CTWD_RJCT_CNT','CTWD_RJCT_MTP',
                  'NAG_CNT','NAG_MTP','CTR_ELCT_CNT','CTR_RT_CNT','OMT_GEN','SAV_CNT','SAV_AMT','OT_CNT','OT_AMT','FXPD_CNT',
                  'FXPD_AMT','HLTH_CNT','HLTH_AMT','PSN_CNT','PSN_AMT','WHOL_CNT','WHOL_AMT','CNCR_WHOL_CNT','CNCR_WHOL_AMT',
-                 'IJRY_CNT','IJRY_AMT','CHLD_CNT','CHLD_AMT','CNCR_CNT','CNCR_AMT','INQ','BR_S')
+                 'IJRY_CNT','IJRY_AMT','CHLD_CNT','CHLD_AMT','CNCR_CNT','CNCR_AMT')
 dbWriteTable(testDB, "FP_M", FP_M, row.names = F, append = F, overwrite = T)
 dbWriteTable(testDB, "FP_D", FP_D, row.names = F, append = F, overwrite = T)
 
