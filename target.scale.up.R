@@ -1,89 +1,120 @@
-target.scale.up <- function(xdata, ydata, eff, rank, pt = NULL, bo = NULL, nd = F, efc = F, o = NULL){
-    
-  # Parameters
-  xdata <- as.matrix(xdata)
-  ydata <- as.matrix(ydata)
-  n     <- nrow(xdata)
-  m     <- ncol(xdata)
-  s     <- ncol(ydata)
-  v     <- m + s
-  o     <- if(is.null(o)) c(1:n) else as.vector(o)
-  dw    <- if(is.null(pt)) rep(1, v + 1 + v + 1) else c(rep(1, v + 1), if(length(pt) == 1) rep(pt, v + 1) else pt)
-  bo    <- if(is.null(bo)) 0 else bo
+target.scale.up <- function(nl.data, ng.data, fx.data, w = NULL, max.slack = NULL, time.out = 60){
   
-  # Data frames
+  # Parameters
+  nl.data   <- as.matrix(nl.data)
+  ng.data   <- as.matrix(ng.data)
+  fx.data   <- as.matrix(fx.data)
+  n         <- nrow(nl.data)
+  n.nl      <- ncol(nl.data)
+  n.ng      <- ncol(ng.data)
+  n.fx      <- ncol(fx.data)
+  n.all     <- sum(n.nl, n.ng, n.fx)
+  w         <- if(is.null(w)) rep(1, n.fx * 2) else as.vector(w)
+  max.slack <- if(is.null(max.slack)) rep(apply(fx.data, 2, max), 2) else rep(max.slack, n.fx * 2)
+
+  # Plates
   res.who <- matrix(NA, nrow = n, ncol = 1)
-  res.p.d <- matrix(NA, nrow = n, ncol = v + 1) 
-  res.n.d <- matrix(NA, nrow = n, ncol = v + 1)
-
+  
   # LP
-  for(k in o){
+  for(k in 1:n){
+    
+    # cbind(nl.data.eff, ng.data.eff, fx.data.eff)
+    
+    # Effective set
+    id.eff.nl   <- which(apply(nl.data, 1, function(x) sum(x >= nl.data[k,]) == n.nl) & apply(nl.data, 1, function(x) sum(x) > 0))
+    id.eff.ng   <- which(apply(ng.data, 1, function(x) sum(x <= ng.data[k,]) == n.ng))
+    id.eff      <- intersect(id.eff.nl, id.eff.ng)
+    n.eff       <- length(id.eff)
+    k.eff       <- which(id.eff == k)
+    nl.data.eff <- nl.data[id.eff,, drop = F]
+    ng.data.eff <- ng.data[id.eff,, drop = F]
+    fx.data.eff <- fx.data[id.eff,, drop = F]
+    
     # Declare LP
-    lp.tsu <- make.lp(0, n + v + 1 + v + 1) # lambda + p.d + n.d
+    lp.tsu <- make.lp(0, n.eff + n.fx * 2) # lambda + d+ + d-
     
-    # Set objective
-    set.objfn(lp.tsu, dw, indices = (n + 1):(n + v + 1 + v + 1))
-
-    # Set type
-    set.type(lp.tsu, 1:n, "binary")
+    # Set obj.F
+    set.objfn(lp.tsu, w, indices = (n.eff + 1):(n.eff + n.fx * 2))
     
-    # Lambda sum to one
-    add.constraint(lp.tsu, rep(1, n), indices = 1:n, "=", 1)
+    # FDH
+    set.type(lp.tsu, 1:n.eff, "binary")
+    add.constraint(lp.tsu, rep(1, n.eff), indices = 1:n.eff, "=", 1)
     
-    # Input constraints
-    for(i in 1:m){
-      if(isTRUE(nd)){ # No decrease of input allowed
-        add.constraint(lp.tsu, c(xdata[,i], -1), indices = c(1:n, n + i), "=", xdata[k, i])  
-      }else{ # Some decrease of input allowed
-        add.constraint(lp.tsu, c(xdata[,i], -1, 1), indices = c(1:n, n + i, n + v + 1 + i), "=", xdata[k, i])  
-      }
-    }
-
-    # Output constraints
-    for(r in 1:s){ # No decrease of output allowed
-      if(r %in% bo){
-        add.constraint(lp.tsu, c(ydata[,r],  1), indices = c(1:n, n + v + 1 + m + r), "=", ydata[k, r])
-        add.constraint(lp.tsu, c(1), indices = c(n + m + r), "=", 0)
-      }else{
-        add.constraint(lp.tsu, c(ydata[,r], -1), indices = c(1:n, n + m + r), "=", ydata[k, r] + 1)
-        add.constraint(lp.tsu, c(1), indices = c(n + v + 1 + m + r), "=", 0)
-      }
+    # Constraints for No-less-than variables
+    for(i in 1:n.nl){
+      add.constraint(lp.tsu, nl.data.eff[,i], indices = 1:n.eff, ">=", nl.data[k, i] + ifelse(nl.data[k, i] == max(nl.data.eff[,i]), 0, 0.1))  
     }
     
-    # Eff/Rank constraints
-    if(isTRUE(efc)){ # Some decrease of efficiency score allowed
-      add.constraint(lp.tsu, c(eff, -1, 1), indices = c(1:n, n + v + 1, n + v + 1 + v + 1), "=", eff[k])  
-      # add.constraint(lp.tsu, rank, indices = 1:n, "<=", rank[k] * 0.99)
-    }else{ # No changes of efficiency score allowed
-      add.constraint(lp.tsu, c(1, 1), indices = c(n + v + 1, n + v + 1 + v + 1), "=", 0)
-      if(eff[k] < 100){
-        add.constraint(lp.tsu, eff, indices = 1:n, ">=", eff[k] * 1.01)
-      }else{
-        add.constraint(lp.tsu, rank, indices = 1:n, "<=", rank[k] * 0.99)
-      }  
+    # Constraints for No-greater-than variables
+    for(j in 1:n.ng){
+      add.constraint(lp.tsu, ng.data.eff[,j], indices = 1:n.eff, "<=", ng.data[k, j] - ifelse(ng.data[k, j] == min(ng.data.eff[,j]), 0, 0.1))  
     }
     
-    # # Eff/Rank constraints
-    # if(eff[k] < 100){
-    #   add.constraint(lp.tsu, eff, indices = 1:n, ">=", eff[k] * 1.01)
-    # }else{
-    #   add.constraint(lp.tsu, rank, indices = 1:n, "<=", rank[k] * 0.99)
-    # }
-
+    # Constraints for flexible variables
+    for(q in 1:n.fx){
+      add.constraint(lp.tsu, c(fx.data.eff[,q], -1, 1), indices = c(1:n.eff, n.eff + q, n.eff + n.fx + q), "=", fx.data[k, q])  
+    }
+    
+    # Bounds
+    set.bounds(lp.tsu, upper = c(rep(1, n.eff), max.slack))
+    
     # Solve
-    if(solve.lpExtPtr(lp.tsu) == 0){
-      res.temp    <- get.variables(lp.tsu)
-      res.who[k,] <- which(res.temp[1:n] > 0)
-      res.p.d[k,] <- res.temp[(n + 1):(n + v + 1)]
-      res.n.d[k,] <- res.temp[(n + v + 2):(n + v + 1 + v + 1)]
-    }else if(rank[k] == 1 | max(rowSums(cbind(xdata, 0)[which(rank <= rank[k]),, drop = F])) == rowSums(cbind(xdata, 0))[k]){
-      res.who[k,] <- k
+    lp.control(lp.tsu, timeout = time.out)
+    status <- solve.lpExtPtr(lp.tsu)
+    if(status == 0){
+      res.who[k,] <- id.eff[get.variables(lp.tsu)[1:n.eff] > 0]  
+    }else if(status == 2){ 
+      
+      # Alternative model 1. from less-than to no-greater-than
+      lp.tsu.alt.1 <- lp.tsu
+      
+      # Remove less-than constraints
+      delete.constraint(lp.tsu.alt.1, (1 + n.nl + 1):(1 + n.nl + n.ng))
+      
+      # Add no-greater-than constraints
+      for(j in 1:n.ng){add.constraint(lp.tsu.alt.1, ng.data.eff[,j], indices = 1:n.eff, "<=", ng.data[k, j])}
+      
+      # Bounds (remedy for an lpSolve bug)
+      set.bounds(lp.tsu.alt.1, lower = c(rep(-0.1, n.eff), rep(0, length(max.slack))))
+      
+      # Re-Solve
+      status.a1 <- solve.lpExtPtr(lp.tsu.alt.1)
+      
+      if(status.a1 == 0){
+        res.who[k,] <- id.eff[get.variables(lp.tsu.alt.1)[1:n.eff] > 0]  
+      }else if(status.a1 == 2){
+        
+        # Alternative model 2. from greater-than to no-less-than
+        lp.tsu.alt.2 <- lp.tsu # This does not work for some reasons!
+        
+        # Remove greater-than & less-than constraints
+        delete.constraint(lp.tsu.alt.2, 2:(1 + n.nl))
+        delete.constraint(lp.tsu.alt.2, (1 + n.fx + 1):(1 + n.fx + n.ng))
+        
+        # Add no-less-than constraints
+        for(i in 1:n.nl){add.constraint(lp.tsu.alt.2, nl.data.eff[,i], indices = 1:n.eff, ">=", nl.data.eff[k.eff, i])}
+        
+        # Add less-than constraints
+        for(j in 1:n.ng){
+          add.constraint(lp.tsu.alt.2, ng.data.eff[,j], indices = 1:n.eff, "<=", ng.data[k, j] - ifelse(ng.data[k, j] == min(ng.data.eff[,j]), 0, 0.1))  
+        }
+        
+        # Bounds (remedy for an lpSolve bug)
+        set.bounds(lp.tsu.alt.2, lower = c(rep(-0.1, n.eff), rep(0, length(max.slack))))
+        
+        # Re-Solve
+        status.a2 <- solve.lpExtPtr(lp.tsu.alt.2)
+        
+        if(status.a2 == 0){
+          res.who[k,] <- id.eff[get.variables(lp.tsu.alt.2)[1:n.eff] > 0]  
+        }else{
+          res.who[k,] <- k
+        }
+      }
     }else{
-      id.r.higher  <- which(rank < rank[k])
-      id.x.greater <- which(rowSums(cbind(xdata, 0)) > rowSums(cbind(xdata, 0))[k])
-      res.who[k,]  <- which(rowSums(cbind(xdata, 0)) == min(rowSums(cbind(xdata, 0))[intersect(id.r.higher, id.x.greater)]))[1]
+      stop("Target is not identified.")
     }
   }
-  results <- list(res.target = res.who, res.pos.d = res.p.d, res.neg.d = res.n.d, res.eff.gap = eff[res.who] - eff)
+  results <- list(res.target = res.who)
   return(results)
 }

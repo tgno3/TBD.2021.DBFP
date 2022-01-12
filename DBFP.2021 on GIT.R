@@ -23,7 +23,7 @@ testDB <- dbConnect(
 dbSendQuery(testDB, 'set character set "utf8"')
 
 # Load data & parameters
-load("DBFP.2011.2110.Rdata")
+load("DBFP.2011.2112.Rdata")
 
 # Send to mariaDB
 FP_M        <- df.raw.2011.2110
@@ -50,9 +50,9 @@ dbWriteTable(testDB, "FP_M", FP_M, row.names = F, append = F, overwrite = T)
 dbWriteTable(testDB, "FP_D", FP_D, row.names = F, append = F, overwrite = T)
 
 # Naming and sorting for coding convenience
-df.raw.mw <- df.raw.2011.2110
+df.raw.mw <- df.raw.2011.2112
 df.raw.mw <- df.raw.mw[order(df.raw.mw[,1], df.raw.mw[,2]),]
-df.raw.dw <- df.raw.211001.211108[df.raw.211001.211108[,1] %in% 20211001:20211108,]
+df.raw.dw <- df.raw.211001.220110
 df.raw.dw <- df.raw.dw[order(df.raw.dw[1], df.raw.dw[2]),]
 nm.m      <- unique(df.raw.mw[,1])
 
@@ -83,8 +83,9 @@ df.eff.mw <- cbind(df.eff.mw, data.frame('보장분석건수(최적+일반)' = d
 df.eff.dw <- cbind(df.eff.dw, data.frame('보장분석건수(최적+일반' = df.eff.dw[,20] + df.eff.dw[,21]))
 
 # Parameters
-m.now       <- 202111
-m.pre       <- df.eff.mw[,1] == (m.now - 1)
+m.now       <- 202201
+m.pre       <- ifelse(as.numeric(substr(m.now, 5, 6)) == 1, as.numeric(paste0(as.numeric(substr(m.now, 1, 4)) - 1, 12)), m.now - 1)
+tf.pre      <- df.eff.mw[,1] == m.pre
 id.so.kpi.m <- c(16, 22, 30, 32, 45, 50, 67, 68, 69, 70:89)
 id.so.kpi.d <- c(15, 18:23, 25:35)
 id.sa.kpi.d <- c(19, 22, 23, 25, 29, 33, 15, 20, 21)
